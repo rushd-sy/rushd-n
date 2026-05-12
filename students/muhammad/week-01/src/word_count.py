@@ -4,6 +4,8 @@
 # Test on a paragraph of Lorem Ipsum.
 
 
+from collections import Counter
+
 
 def word_count(text: str):
     words_list = text.split()
@@ -15,8 +17,13 @@ def word_count(text: str):
     return dic
 
 
+def word_count_2(s: str):
+    w = [word.lower() for word in s.split()]
+    return Counter(w)
 
 
 if __name__ == "__main__":
     text = input("Enter your text please: ")
-    print(word_count(text))
+    print(f"Method one:\n{word_count(text)}")
+    print(f"Method twp:\n{word_count_2(text)}")
+
