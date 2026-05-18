@@ -1,4 +1,7 @@
 class BankAccount():
+    full_name: str
+    __balance: float = 0.0
+    account_num: int
 
     @classmethod
     def from_dict(cls, dic: dict):
@@ -14,7 +17,7 @@ class BankAccount():
         
     @staticmethod
     def is_valid_account_number(num)-> bool:
-            return isinstance(num, int)
+            return isinstance(num, int) and int(num) >= 0
 
     def __init__(self, full_name: str, account_num: int, initial_balance: float = 0) -> None:
         if not self.is_valid_account_number(account_num):
@@ -27,6 +30,9 @@ class BankAccount():
 
 
     def deposit(self, deposit_amount: float) -> None:
+        if deposit_amount <= 0:
+            raise ValueError("Deposit amount should be positive, found nonpositive amount")
+
         self.__balance += deposit_amount
         print(f"""Deposit completed successfully..
 Old balance: ${self.__balance - deposit_amount}
@@ -47,29 +53,3 @@ New balance: ${self.__balance}
 
     def get_balance(self) -> float:
         return self.__balance
-
-
-
-
-# bitar_acc = BankAccount("Muhammad Bitar", 123)
-# print(bitar_acc.full_name)
-# print(bitar_acc.account_num)
-# bitar_acc.deposit(200)
-# bitar_acc.deposit(400)
-# # bitar_acc.withdraw(601)
-# print(bitar_acc.get_balance())
-
-# amjad_acc = BankAccount.from_dict({
-#     "account_num": 124,
-#     "full_name": "Amjad Bakro"
-# })
-# # amjad_acc.withdraw(20)
-# amjad_acc.deposit(20)
-
-# amjad_acc = BankAccount.from_dict({
-#     "account_num": "123@",
-#     "full_name": "Amjad Bakro"
-# })
-# # amjad_acc.withdraw(20)
-# amjad_acc.deposit(20)
-
