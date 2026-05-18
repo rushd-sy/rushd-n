@@ -4,7 +4,7 @@ class BankAccount():
     account_num: int
 
     @classmethod
-    def from_dict(cls, dic: dict):
+    def from_dict(cls, dic: dict) -> "BankAccount":
         if 'account_num' not in dic:
             raise ValueError("Dictionary must contain 'account_num")
         if 'full_name' not in dic:
@@ -17,7 +17,7 @@ class BankAccount():
         
     @staticmethod
     def is_valid_account_number(num)-> bool:
-            return isinstance(num, int) and int(num) >= 0
+        return isinstance(num, int) and int(num) >= 0
 
     def __init__(self, full_name: str, account_num: int, initial_balance: float = 0) -> None:
         if not self.is_valid_account_number(account_num):
