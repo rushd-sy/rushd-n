@@ -72,3 +72,4 @@ New balance: ${self.__balance}
 # })
 # # amjad_acc.withdraw(20)
 # amjad_acc.deposit(20)
+
