@@ -29,6 +29,7 @@ class BankAccount:
         if not isinstance(money, int) or money < 0:
             raise ValueError("InvalidMoneyError")
 
+    
     def deposit(self, add: int) -> None:
         if not isinstance(add, int) or add <= 0:
             raise ValueError("InvalidDepositAmountError")
@@ -53,12 +54,14 @@ class BankAccountPydantic(BaseModel):
     num: int
 
     @field_validator("num")
+    @classmethod
     def validate_account_number(cls, num):
         if not isinstance(num, int) or num <= 0:
             raise ValueError("InvalidAccountNumberError")
         return num
 
     @field_validator("money")
+    @classmethod
     def validate_money(cls, money):
         if not isinstance(money, int) or money < 0:
             raise ValueError("InvalidMoneyError")

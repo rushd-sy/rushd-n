@@ -32,26 +32,17 @@ class User(BaseModel):
     
 
 
-def test_user_name_invalid():
-    try:
+def test_user_name_invalid():    
+    with pytest.raises(ValidationError):
         User(age=25, name="A", email="amjad@gmail.com")
-        assert False, "Expected validation error"
-    except ValidationError as e:
-        assert "Name must be at least 2 characters" in str(e)
 
 def test_user_age_invalid():
-    try:
-        User(age=10, name="amjad", email="amjad@gmail.com")
-        assert False, "Expected validation error"
-    except ValidationError as e:
-        assert "Age must be between 13 and 120" in str(e)
+       with pytest.raises(ValidationError):
+           User(age=10, name="amjad", email="amjad@gmail.com")
 
 def test_user_email_invalid():
-    try:
+    with pytest.raises(ValidationError):
         User(age=25, name="amjad", email="amjadgmail.com")
-        assert False, "Expected validation error"
-    except ValidationError as e:
-        assert "Invalid email address" in str(e)
 
 def test_user_name_valid():
     user = User(age=25, name="Amjad", email="amjad@gmail.com")

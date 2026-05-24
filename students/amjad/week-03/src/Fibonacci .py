@@ -7,8 +7,9 @@ def Fibonacci():
     yield a
     while True:
         yield b
+        c = a
         a = b
-        b = a + b
+        b = c + b
 
 
 if __name__ == "__main__":
