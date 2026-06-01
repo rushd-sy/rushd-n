@@ -1,7 +1,6 @@
 from pydantic import ValidationError
 import pytest
 from services import *
-from conftest import *
 from exceptions import *
 
 def test_add_student_short_name(students):

@@ -1,5 +1,4 @@
 from services import *
-from conftest import *
 
 
 def test_add_student(students):
