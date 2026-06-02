@@ -11,5 +11,5 @@ def temp_storage(tmp_path, monkeypatch):
 @pytest.fixture
 def students():
     return [
-        {"name": "amjad", "email": "amjad@example.com", "age": 20},
+        {"id": 1, "name": "amjad", "email": "amjad@example.com", "age": 20},
     ]

@@ -21,7 +21,7 @@ def test_add_student_duplicate_email(students):
 
 def test_delete_student_not_found(students):
     with pytest.raises(StudentNotFoundError):
-        delete_student(students, 1)
+        delete_student(students, 999)
 
 def test_add_grade_student_not_found(students):
     with pytest.raises(StudentNotFoundError):

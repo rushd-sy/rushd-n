@@ -75,7 +75,7 @@ def update_student(
 def delete_student(students: list[dict], student_id: int) -> None:
     old_length = len(students)
 
-    students = [student for student in students if student["id"] != student_id]
+    students[:] = [student for student in students if student["id"] != student_id]
 
     if len(students) == old_length:
         raise StudentNotFoundError("Student not found")
