@@ -1,3 +1,5 @@
+import json
+
 from services import *
 
 
@@ -25,7 +27,10 @@ def test_update_student(students):
 
 def test_delete_all_student_info(students):
     delete_student(students, 1)
-    assert len(students) == 0
+    # must the json file to be empty after deleting the student
+    with open("students.json", "r") as f:
+        data = json.load(f)
+        assert data == []
 
 def test_import_csv(students, tmp_path):
     csv_path = tmp_path / "students.csv"

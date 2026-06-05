@@ -1,6 +1,5 @@
-from Student import Student
-from Grades import Grade
-from storage import load_students, to_json
+from models import Student, Grade
+from storage import to_json
 from exceptions import *
 
 
@@ -51,14 +50,22 @@ def update_student(
     age: int | None = None,
 ) -> None:
 
-    for student in students:
-        if student["email"] == email:
-            raise EmailAlreadyUsedError("Email already used")
-    Student(id=student_id, name=name or "Valid", email=email or "Valid@Email.com", age=age or 16)
     student_found = False
     for student in students:
+        if email is not None and student["email"] == email and student["id"] != student_id:
+            raise EmailAlreadyUsedError("Email already used")
         if student["id"] == student_id:
             student_found = True
+            Student(
+                    id=student_id, 
+                    name=name if name is not None else student["name"], 
+                    email=email if email is not None else student["email"],
+                    age=age if age is not None else student["age"]
+            )
+    if not student_found:
+        raise StudentNotFoundError("Student not found")
+    for student in students:
+        if student["id"] == student_id:
             if name is not None:
                 student["name"] = name
             if email is not None:
@@ -66,8 +73,6 @@ def update_student(
             if age is not None:
                 student["age"] = age
             break
-    if not student_found:
-        raise StudentNotFoundError("Student not found")
     to_json(students)
     print(f"Student {student_id} updated successfully")
 
@@ -109,16 +114,16 @@ def student_report(students: list[dict], student_id: int) -> None:
             if not grades:
                 print(f"Student {student['name']} has no grades.")
                 return
-            sum = 0
+            total = 0
             highest = grades[0]
             lowest = grades[0]
             for grade in grades:
-                sum += grade["score"]
+                total += grade["score"]
                 if grade["score"] > highest["score"]:
                     highest = grade
                 if grade["score"] < lowest["score"]:
                     lowest = grade
-            average = sum / len(grades)
+            average = total / len(grades)
             print(
                 f"{student['name']} — {len(grades)} grades, average: {average}, highest: {highest['score']} ({highest['subject']}), lowest: {lowest['score']} ({lowest['subject']})"
             )
@@ -127,17 +132,48 @@ def student_report(students: list[dict], student_id: int) -> None:
 
 
 def import_students(students: list[dict], file_path: str) -> None:
-    with open(file_path, "r") as f:
-        lines = f.readlines()
-
     invalid = 0
-    for line in lines:
-        if line.count(",") != 2:
-            invalid += 1
-            continue
-        name, email, age = line.strip().split(",")
-        add_student(students, name, email, int(age))
+    total = 0
+    with open(file_path, "r") as f:
+        lines = (line for line in f)
+        for line in lines:
+            total += 1
+            if line.count(",") != 2:
+                invalid += 1
+                continue
+            name, email, age = line.strip().split(",")
+            try:
+                add_student(students, name, email, int(age))
+            except ValueError:
+                invalid += 1
+            except EmailAlreadyUsedError:
+                invalid += 1
 
     print(
-        f"Imported {len(lines) - invalid} students, {invalid} rows skipped (invalid data)"
+        f"Imported {total - invalid} students, {invalid} rows skipped (invalid data)"
     )
+
+def class_report(students: list[dict]) -> None:
+    if not students:
+        print("No students in the class.")
+        return
+
+    total_students = len(students)
+    total_average = 0
+    student_averages = []
+
+    for student in students:
+        grades = student.get("grades", [])
+        if grades:
+            average = sum(grade["score"] for grade in grades) / len(grades)
+            total_average += average
+            student_averages.append((student["name"], average))
+
+    class_average = total_average / len(student_averages) if student_averages else 0
+    top_students = sorted(student_averages, key=lambda x: x[1], reverse=True)[:3]
+
+    print(f"Total students: {total_students}")
+    print(f"Class average: {class_average}")
+    print("Top 3 students by average:")
+    for name, avg in top_students:
+        print(f"{name} - Average: {avg}")
