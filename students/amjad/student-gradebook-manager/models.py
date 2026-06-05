@@ -1,3 +1,4 @@
+import datetime
 from pydantic import BaseModel, field_validator
 
 
@@ -5,6 +6,7 @@ class Grade(BaseModel):
     student_id: int
     subject: str
     score: float
+    date: str
 
     @field_validator("score")
     @classmethod
@@ -20,6 +22,14 @@ class Grade(BaseModel):
             raise ValueError("Subject must be at least 2 characters long")
         return value
 
+    @field_validator("date")
+    @classmethod
+    def validate_date(cls, value):
+        try:
+            datetime.datetime.strptime(value, "%Y-%m-%d")
+        except ValueError:
+            raise ValueError("Date must be in the format YYYY-MM-DD")
+        return value
 
 class Student(BaseModel):
     id: int

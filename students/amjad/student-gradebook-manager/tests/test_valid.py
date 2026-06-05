@@ -1,6 +1,6 @@
 import json
 
-from services import *
+from services import add_student, delete_student, add_grade, update_student, import_students
 
 
 def test_add_student(students):
@@ -18,6 +18,7 @@ def test_add_grade(students):
     assert "grades" in students[0]
     assert len(students[0]["grades"]) == 1
     assert students[0]["grades"][0]["subject"] == "Math"
+    assert "date" in students[0]["grades"][0]
 
 def test_update_student(students):
     update_student(students, name="Amjad_new", email="amjad_new@example.com", age=25, student_id=1)
@@ -26,8 +27,8 @@ def test_update_student(students):
     assert students[0]["age"] == 25
 
 def test_delete_all_student_info(students):
+    add_grade(students, 1, "Math", 90)
     delete_student(students, 1)
-    # must the json file to be empty after deleting the student
     with open("students.json", "r") as f:
         data = json.load(f)
         assert data == []

@@ -1,7 +1,7 @@
 from pydantic import ValidationError
 import pytest
-from services import *
-from exceptions import *
+from services import add_student, delete_student, add_grade, update_student, import_students
+from exceptions import EmailAlreadyUsedError, StudentNotFoundError
 
 def test_add_student_short_name(students):
     with pytest.raises(ValidationError):

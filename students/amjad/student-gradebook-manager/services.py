@@ -1,7 +1,7 @@
 from models import Student, Grade
 from storage import to_json
-from exceptions import *
-
+from exceptions import EmailAlreadyUsedError, StudentNotFoundError
+import datetime
 
 def add_student(students: list[dict], name: str, email: str, age: int) -> None:
     if students:
@@ -95,9 +95,10 @@ def add_grade(students: list[dict], student_id: int, subject: str, score: float)
         if student["id"] == student_id:
             if "grades" not in student:
                 student["grades"] = []
-            grade = Grade(student_id=student_id, subject=subject, score=score)
+            date = datetime.datetime.now().strftime("%Y-%m-%d")
+            grade = Grade(student_id=student_id, subject=subject, score=score, date=date)
             student["grades"].append(
-                {"subject": grade.subject, "score": grade.score}
+                {"subject": grade.subject, "score": grade.score, "date": grade.date}
             )
             student_found = True
             break
