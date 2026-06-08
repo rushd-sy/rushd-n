@@ -2,6 +2,7 @@ import os
 import json
 import argparse
 
+from models import Student, Grade
 from pydantic import ValidationError
 from services import (
     add_student,
@@ -65,8 +66,8 @@ if __name__ == "__main__":
 
     if args.command == "add-student":
         try:
-            student_id = add_student(students, args.name, args.email, args.age)
-            print(f"Student added with ID: {student_id}")
+            student = add_student(students, args.name, args.email, args.age)
+            print(f"Student added with ID: {student.id}")
         except EmailAlreadyUsedError as e:
             print(f"Error: {e}")
         except ValidationError as e:
@@ -81,19 +82,21 @@ if __name__ == "__main__":
 
     elif args.command == "show-student":
         try:
-            student = show_student(students, args.student_id)
-            print(f"{student['name']} ({student['email']}, age {student['age']})")
-            if "grades"  in student:
-                grades = student.get("grades", [])
+            student, grades = show_student(students, args.student_id)
+            print(f"{student.name} ({student.email}, age {student.age})")
+            if grades:
                 for grade in grades:
-                    print(f"{grade['subject']} - {grade['score']}")
+                    print(f"{grade.subject} - {grade.score} ({grade.date})")
         except StudentNotFoundError as e:
             print(f"Error: {e}")
 
     elif args.command == "update-student":
         try:
-            update_student(students, args.student_id, args.name, args.email, args.age)
-            print(f"Student {args.student_id} updated successfully")
+            is_updated = update_student(students, args.student_id, args.name, args.email, args.age)
+            if is_updated:
+                print(f"Student {args.student_id} updated successfully")
+            else:
+                print(f"No changes made to student {args.student_id}")
         except EmailAlreadyUsedError as e:
             print(f"Error: {e}")
         except StudentNotFoundError as e:
@@ -103,15 +106,19 @@ if __name__ == "__main__":
 
     elif args.command == "delete-student":
         try:
-            delete_student(students, args.student_id)
-            print(f"Student {args.student_id} and their grades deleted")
+            is_deleted = delete_student(students, args.student_id)
+            if is_deleted:
+                print(f"Student {args.student_id} and their grades deleted")
+            else:
+                print(f"Student {args.student_id} not found")
         except StudentNotFoundError as e:
             print(f"Error: {e}")
 
     elif args.command == "add-grade":
         try:
-            add_grade(students, args.student_id, args.subject, args.grade)
-            print(f"Grade added for student {args.student_id}")
+            is_added = add_grade(students, args.student_id, args.subject, args.grade)
+            if is_added:
+                print(f"Grade added for student {args.student_id}")
         except StudentNotFoundError as e:
             print(f"Error: {e}")
         except InvalidGradeError as e:

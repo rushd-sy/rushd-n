@@ -2,10 +2,9 @@ from pydantic import ValidationError
 
 from models import Student, Grade
 from storage import to_json
-from exceptions import EmailAlreadyUsedError, StudentNotFoundError
-import datetime
+from exceptions import EmailAlreadyUsedError, StudentNotFoundError, InvalidGradeError
 
-def add_student(students: list[dict], name: str, email: str, age: int) -> int:
+def add_student(students: list[dict], name: str, email: str, age: int) -> Student :
     if students:
         student_id = max(student["id"] for student in students) + 1
     else:
@@ -19,13 +18,13 @@ def add_student(students: list[dict], name: str, email: str, age: int) -> int:
 
     students.append(student.model_dump())
     to_json(students)
-    return student_id
+    return student
 
 
-def show_student(students: list[dict], student_id: int) -> dict:
+def show_student(students: list[dict], student_id: int) -> tuple[Student, list[Grade]]:
     for student in students:
         if student["id"] == student_id:
-            return student
+            return (Student(**student), student.get("grades", []))
 
     raise StudentNotFoundError("Student not found")
 
@@ -36,7 +35,7 @@ def update_student(
     name: str | None = None,
     email: str | None = None,
     age: int | None = None,
-) -> None:
+) -> bool:
 
     target_student = None
     
@@ -64,9 +63,9 @@ def update_student(
         target_student["age"] = age
         
     to_json(students)
+    return True
 
-
-def delete_student(students: list[dict], student_id: int) -> None:
+def delete_student(students: list[dict], student_id: int) -> bool:
     old_length = len(students)
 
     students[:] = [student for student in students if student["id"] != student_id]
@@ -75,16 +74,19 @@ def delete_student(students: list[dict], student_id: int) -> None:
         raise StudentNotFoundError("Student not found")
 
     to_json(students)
+    return True
 
 
-def add_grade(students: list[dict], student_id: int, subject: str, score: float) -> None:
+def add_grade(students: list[dict], student_id: int, subject: str, score: float) -> bool:
     student_found = False
     for student in students:
         if student["id"] == student_id:
             if "grades" not in student:
                 student["grades"] = []
-            date = datetime.datetime.now().strftime("%Y-%m-%d")
-            grade = Grade(subject=subject, score=score)
+            try:
+                grade = Grade(subject=subject, score=score)
+            except ValueError as e:
+                raise InvalidGradeError(str(e))
             student["grades"].append(
                 {"subject": grade.subject, "score": grade.score, "date": grade.date}
             )
@@ -93,6 +95,7 @@ def add_grade(students: list[dict], student_id: int, subject: str, score: float)
     if not student_found:
         raise StudentNotFoundError("Student not found")
     to_json(students)
+    return True
 
 
 def student_report(students: list[dict], student_id: int) -> dict:

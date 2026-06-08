@@ -1,6 +1,5 @@
 import datetime
 from pydantic import BaseModel, Field, field_validator, EmailStr
-from datetime import date
 
 class Grade(BaseModel):
     subject: str
