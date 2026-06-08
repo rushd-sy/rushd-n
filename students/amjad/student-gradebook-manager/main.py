@@ -5,7 +5,6 @@ import argparse
 from pydantic import ValidationError
 from services import (
     add_student,
-    list_students,
     show_student,
     update_student,
     delete_student,
@@ -66,24 +65,35 @@ if __name__ == "__main__":
 
     if args.command == "add-student":
         try:
-            add_student(students, args.name, args.email, args.age)
+            student_id = add_student(students, args.name, args.email, args.age)
+            print(f"Student added with ID: {student_id}")
         except EmailAlreadyUsedError as e:
             print(f"Error: {e}")
         except ValidationError as e:
             print(f"Error: {e}")
+        
 
     elif args.command == "list-students":
-        list_students(students)
+        for student in students:
+            print(
+                f"{student['id']} - {student['name']} ({student['email']}, age {student['age']})"
+            )
 
     elif args.command == "show-student":
         try:
-            show_student(students, args.student_id)
+            student = show_student(students, args.student_id)
+            print(f"{student['name']} ({student['email']}, age {student['age']})")
+            if "grades"  in student:
+                grades = student.get("grades", [])
+                for grade in grades:
+                    print(f"{grade['subject']} - {grade['score']}")
         except StudentNotFoundError as e:
             print(f"Error: {e}")
 
     elif args.command == "update-student":
         try:
             update_student(students, args.student_id, args.name, args.email, args.age)
+            print(f"Student {args.student_id} updated successfully")
         except EmailAlreadyUsedError as e:
             print(f"Error: {e}")
         except StudentNotFoundError as e:
@@ -94,12 +104,14 @@ if __name__ == "__main__":
     elif args.command == "delete-student":
         try:
             delete_student(students, args.student_id)
+            print(f"Student {args.student_id} and their grades deleted")
         except StudentNotFoundError as e:
             print(f"Error: {e}")
 
     elif args.command == "add-grade":
         try:
             add_grade(students, args.student_id, args.subject, args.grade)
+            print(f"Grade added for student {args.student_id}")
         except StudentNotFoundError as e:
             print(f"Error: {e}")
         except InvalidGradeError as e:
@@ -109,13 +121,18 @@ if __name__ == "__main__":
 
     elif args.command == "student-report":
         try:
-            student_report(students, args.student_id)
+            report = student_report(students, args.student_id)
+            if not report.get("has_grades"):
+                print(f"Student {report['name']} has no grades.")
+            else:
+                print(f"{report['name']} — {report['grades_count']} grades, average: {report['average']}, highest: {report['highest_score']} ({report['highest_subject']}), lowest: {report['lowest_score']} ({report['lowest_subject']})")
         except StudentNotFoundError as e:
             print(f"Error: {e}")
 
     elif args.command == "import-students":
         try:
-            import_students(students, args.csv_file)
+            imported, invalid = import_students(students, args.csv_file)
+            print(f"Imported {imported} students, {invalid} rows skipped (invalid data)")
         except EmailAlreadyUsedError as e:
             print(f"Error: {e}")
         except StudentNotFoundError as e:
@@ -124,7 +141,15 @@ if __name__ == "__main__":
             print(f"Error: {e}")
 
     elif args.command == "class-report":
-        class_report(students)
+        report = class_report(students)
+        if report is None:
+            print("No students in the class.")
+        else:
+            print(f"Total students: {report['total_students']}")
+            print(f"Class average: {report['class_average']}")
+            print("Top 3 students by average:")
+            for name, avg in report['top_students']:
+                print(f"{name} - Average: {avg}")
 
     elif args.command == "list":
         print("Available commands:")
@@ -137,3 +162,6 @@ if __name__ == "__main__":
         print("student-report --student_id ID")
         print("class-report")
         print("import-students --csv_file FILE")
+
+    else:
+        parser.print_help()
