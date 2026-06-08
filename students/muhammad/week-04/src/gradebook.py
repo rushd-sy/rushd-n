@@ -12,7 +12,7 @@ contains functions to:
 import sys
 import csv
 
-from students import Student
+from students import Student 
 from grades import Grade
 from exceptions import WrongCommandError, DuplicateEmailError, StudentNotFoundError
 from storage import read_data, write_data
@@ -191,15 +191,12 @@ def import_students(csv_file: str) -> None:
             email = email.strip()
             try:
                 age = int(age_str.strip())
-            except ValueError:
-                raise ValueError("Age must be an integer")
-
-            try:
-                student = Student(name=name, email=email, age=age)
+                student = Student(id=0, name=name, email=email, age=age)
                 add_student(student)
             except Exception:
                 skipped += 1
-                imported -=1
+                imported -= 1
+
     print(f"Imported {imported} students, {skipped} rows skipped (invalid data)")
 
 def add_grade(grade: "Grade") -> None:

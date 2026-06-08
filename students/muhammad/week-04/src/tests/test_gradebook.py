@@ -22,7 +22,7 @@ def temp_json_file(monkeypatch):
 
 class TestGradeBook:
     def test_adding_valid_student_works(self) -> None:
-        student = Student(name="MuhammadTest", email="muhammad@email.com", age=21)
+        student = Student(id=0, name="MuhammadTest", email="muhammad@email.com", age=21)
         gradebook.add_student(student)
 
         data = storage.read_data()
@@ -38,30 +38,30 @@ class TestGradeBook:
     
     def test_adding_student_short_name_fails(self) -> None:
         with pytest.raises(ValidationError):
-            Student(name="M", email="muhammad@email.com", age=21)
+            Student(id=0, name="M", email="muhammad@email.com", age=21)
 
         data = storage.read_data()
         assert len(data['students']) == 0
     
     def test_adding_student_bad_email_fails(self) -> None:
         with pytest.raises(ValidationError):
-            Student(name="Muhammad", email="muhammad", age=21)
+            Student(id=0, name="Muhammad", email="muhammad", age=21)
 
         data = storage.read_data()
         assert len(data['students']) == 0
     
     def test_adding_student_age_out_of_range_fails(self) -> None:
         with pytest.raises(ValidationError):
-            Student(name="Muhammad", email="muhammad@email.com", age=5)
+            Student(id=0, name="Muhammad", email="muhammad@email.com", age=5)
 
         data = storage.read_data()
         assert len(data['students']) == 0
 
     def test_adding_duplicated_email_fails(self) -> None:
-        student = Student(name="Muhammad", email="muhammad@email.com", age=21)
+        student = Student(id=0, name="Muhammad", email="muhammad@email.com", age=21)
         gradebook.add_student(student)
         
-        student2 = Student(name="Ahmad", email="muhammad@email.com", age=25)
+        student2 = Student(id=0, name="Ahmad", email="muhammad@email.com", age=25)
         with pytest.raises(gradebook.DuplicateEmailError):
             gradebook.add_student(student2)
         
@@ -78,7 +78,7 @@ class TestGradeBook:
         assert  dict_student == data['students'][0]
     
     def test_add_grade_to_existing_student_works(self) -> None:
-        student = Student(name="Muhammad", email="muhammad@email.com", age=21)
+        student = Student(id=0, name="Muhammad", email="muhammad@email.com", age=21)
         gradebook.add_student(student)
         grade = Grade(student_id=1, subject="Math", score=95.0)
         gradebook.add_grade(grade)
@@ -100,7 +100,7 @@ class TestGradeBook:
         assert  dict_student == data['students'][0]
     
     def test_add_grade_to_non_existing_student_fails(self) -> None:
-        student = Student(name="Muhammad", email="muhammad@email.com", age=21)
+        student = Student(id=0, name="Muhammad", email="muhammad@email.com", age=21)
         gradebook.add_student(student)
         grade = Grade(student_id=2, subject="Math", score=95.0)
         with pytest.raises(gradebook.StudentNotFoundError):
@@ -118,7 +118,7 @@ class TestGradeBook:
         assert  dict_student == data['students'][0]
     
     def test_score_out_of_range_fails(self) -> None:
-        student = Student(name="Muhammad", email="muhammad@email.com", age=21)
+        student = Student(id=0, name="Muhammad", email="muhammad@email.com", age=21)
         gradebook.add_student(student)
         with pytest.raises(ValidationError):
             grade = Grade(student_id=1, subject="Math", score=105.0)
@@ -136,7 +136,7 @@ class TestGradeBook:
         assert  dict_student == data['students'][0]
     
     def test_deleted_student_deleted_their_grades(self) -> None:
-        student = Student(name="Muhammad", email="muhammad@email.com", age=21)
+        student = Student(id=0, name="Muhammad", email="muhammad@email.com", age=21)
         gradebook.add_student(student)
         grade = Grade(student_id=1, subject="Math", score=99.0)
         gradebook.add_grade(grade)
@@ -149,7 +149,7 @@ class TestGradeBook:
     
     
     def test_student_report_average_works(self, capsys) -> None:
-        student = Student(name="Muhammad", email="muhammad@email.com", age=21)
+        student = Student(id=0, name="Muhammad", email="muhammad@email.com", age=21)
         gradebook.add_student(student)
         grade = Grade(student_id=1, subject="Math", score=99.0)
         gradebook.add_grade(grade)
