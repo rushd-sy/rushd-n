@@ -1,13 +1,11 @@
 import datetime
-from pydantic import BaseModel, field_validator
-
+from pydantic import BaseModel, Field, field_validator, EmailStr
+from datetime import date
 
 class Grade(BaseModel):
-    student_id: int
     subject: str
     score: float
-    date: str
-
+    date: datetime.date = Field(default_factory=datetime.date.today)
     @field_validator("score")
     @classmethod
     def validate_score(cls, value):
@@ -34,15 +32,9 @@ class Grade(BaseModel):
 class Student(BaseModel):
     id: int
     name: str
-    email: str
+    email: EmailStr
     age: int
 
-    @field_validator("email")
-    @classmethod
-    def validate_email(cls, value):
-        if "@" not in value:
-            raise ValueError("Invalid email address")
-        return value
 
     @field_validator("age")
     @classmethod
