@@ -17,10 +17,16 @@ from grades import Grade
 from exceptions import WrongCommandError, DuplicateEmailError, StudentNotFoundError
 from storage import read_data, write_data
 
+
+
 def add_student(student: "Student") -> None:
     data: dict[str, list] = read_data()
+
+    def get_new_id() -> int:
+        return (1 if len(data['students']) == 0 else data['students'][-1]['id'] + 1)
+    
     new_student = {
-        "id" : Student.get_new_id(),
+        "id" : get_new_id(),
         "name" : student.name,
         "email" : student.email,
         "age" : student.age,
@@ -39,8 +45,16 @@ def list_students() -> None:
     for student in data['students']:
         print(f"{student['id']}- {student['name']} ({student['email']}, age {student['age']})")
 
+
+def validate_id(student_id: int) -> None:
+    data: dict = read_data()
+    for student in data['students']:
+        if student['id'] == student_id:
+            return 
+    raise StudentNotFoundError()
+
 def show_student(student_id: int) -> None:
-    Student.validate_id(student_id)
+    validate_id(student_id)
     data: dict[str, list] = read_data()
     for student in data['students']:
         if student_id == student['id']:
@@ -52,7 +66,7 @@ def show_student(student_id: int) -> None:
             return
 
 def delete_student(student_id: int) -> None:
-    Student.validate_id(student_id)
+    validate_id(student_id)
     data: dict[str, list] = read_data()
     for ind, student in enumerate(data['students']):
         if student_id == student['id']:
@@ -62,7 +76,7 @@ def delete_student(student_id: int) -> None:
             return
 
 def student_report(student_id: int) -> None:
-    Student.validate_id(student_id)
+    validate_id(student_id)
     data: dict[str, list] = read_data()
     for student in data['students']:
         if student_id == student['id']:
@@ -87,7 +101,7 @@ def student_report(student_id: int) -> None:
     
 
 def update_student(student_id: int, fields: list, values: list) -> None:
-    Student.validate_id(student_id)
+    validate_id(student_id)
     data: dict[str, list] = read_data()
     for ind, student in enumerate(data['students']):
         if student['id'] == student_id:
