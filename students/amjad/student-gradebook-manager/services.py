@@ -24,7 +24,7 @@ def add_student(students: list[dict], name: str, email: str, age: int) -> Studen
 def show_student(students: list[dict], student_id: int) -> tuple[Student, list[Grade]]:
     for student in students:
         if student["id"] == student_id:
-            return (Student(**student), student.get("grades", []))
+            return (Student(**student), [Grade(**grade) for grade in student.get("grades", [])])
 
     raise StudentNotFoundError("Student not found")
 
@@ -83,9 +83,11 @@ def add_grade(students: list[dict], student_id: int, subject: str, score: float)
         if student["id"] == student_id:
             try:
                 grade = Grade(subject=subject, score=score)
-            except ValueError as e:
+            except (ValueError, ValidationError) as e:
                 raise InvalidGradeError(str(e))
-            student.setdefault("grades", []).append(grade.model_dump())
+            grade_dict = grade.model_dump()
+            grade_dict["date"] = grade_dict["date"].isoformat()
+            student.setdefault("grades", []).append(grade_dict)
             student_found = True
             break
     if not student_found:
@@ -97,31 +99,31 @@ def add_grade(students: list[dict], student_id: int, subject: str, score: float)
 def student_report(students: list[dict], student_id: int) -> StudentReport:
     for student in students:
         if student["id"] == student_id:
-            grades = student.get("grades", [])
-            if not grades:
+            grades = [Grade(**grade) for grade in student.get("grades", [])]
+            if len(grades) == 0:
                 return StudentReport(name=student['name'], has_grades=False)
             elif grades:
                 total = 0
                 highest = grades[0]
                 lowest = grades[0]
                 for grade in grades:
-                    total += grade["score"]
-                    if grade["score"] > highest["score"]:
+                    total += grade.score
+                    if grade.score > highest.score:
                         highest = grade
-                    if grade["score"] < lowest["score"]:
+                    if grade.score < lowest.score:
                         lowest = grade
                         
                 average = total / len(grades)
-                round(average, 2)
+                average = round(average, 2)
                 report = StudentReport(
                     name=student['name'],
                     has_grades=True,
                     grades_count=len(grades),
                     average=average,
-                    highest_score=highest['score'],
-                    highest_subject=highest['subject'],
-                    lowest_score=lowest['score'],
-                    lowest_subject=lowest['subject']
+                    highest_score=highest.score,
+                    highest_subject=highest.subject,
+                    lowest_score=lowest.score,
+                    lowest_subject=lowest.subject
                 )
                 return report
     raise StudentNotFoundError("Student not found")
@@ -155,9 +157,9 @@ def class_report(students: list[dict]) -> ClassReport | None:
     student_averages = []
 
     for student in students:
-        grades = student.get("grades", [])
+        grades = [Grade(**grade) for grade in student.get("grades", [])]
         if grades:
-            average = sum(grade["score"] for grade in grades) / len(grades)
+            average = sum(grade.score for grade in grades) / len(grades)
             total_average += average
             student_averages.append((student["name"], average))
 
