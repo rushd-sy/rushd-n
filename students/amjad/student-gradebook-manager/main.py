@@ -129,10 +129,10 @@ if __name__ == "__main__":
     elif args.command == "student-report":
         try:
             report = student_report(students, args.student_id)
-            if not report.get("has_grades"):
-                print(f"Student {report['name']} has no grades.")
+            if not report.has_grades:
+                print(f"Student {report.name} has no grades.")
             else:
-                print(f"{report['name']} — {report['grades_count']} grades, average: {report['average']}, highest: {report['highest_score']} ({report['highest_subject']}), lowest: {report['lowest_score']} ({report['lowest_subject']})")
+                print(f"{report.name} — {report.grades_count} grades, average: {report.average}, highest: {report.highest_score} ({report.highest_subject}), lowest: {report.lowest_score} ({report.lowest_subject})")
         except StudentNotFoundError as e:
             print(f"Error: {e}")
 
@@ -152,10 +152,10 @@ if __name__ == "__main__":
         if report is None:
             print("No students in the class.")
         else:
-            print(f"Total students: {report['total_students']}")
-            print(f"Class average: {report['class_average']}")
+            print(f"Total students: {report.total_students}")
+            print(f"Class average: {report.class_average}")
             print("Top 3 students by average:")
-            for name, avg in report['top_students']:
+            for name, avg in report.top_students:
                 print(f"{name} - Average: {avg}")
 
     elif args.command == "list":
