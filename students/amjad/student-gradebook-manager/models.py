@@ -48,3 +48,20 @@ class Student(BaseModel):
         if len(value) < 2:
             raise ValueError("Name must be at least 2 characters long")
         return value
+
+
+class StudentReport(BaseModel):
+    name: str
+    has_grades: bool
+    grades_count: int | None = None
+    average: float | None = None
+    highest_score: float | None = None
+    highest_subject: str | None = None
+    lowest_score: float | None = None
+    lowest_subject: str | None = None
+
+
+class ClassReport(BaseModel):
+    total_students: int
+    class_average: float
+    top_students: list[tuple[str, float]]

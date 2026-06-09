@@ -1,6 +1,6 @@
 from pydantic import ValidationError
 
-from models import Student, Grade
+from models import ClassReport, Student, Grade, StudentReport
 from storage import to_json
 from exceptions import EmailAlreadyUsedError, StudentNotFoundError, InvalidGradeError
 
@@ -81,15 +81,11 @@ def add_grade(students: list[dict], student_id: int, subject: str, score: float)
     student_found = False
     for student in students:
         if student["id"] == student_id:
-            if "grades" not in student:
-                student["grades"] = []
             try:
                 grade = Grade(subject=subject, score=score)
             except ValueError as e:
                 raise InvalidGradeError(str(e))
-            student["grades"].append(
-                {"subject": grade.subject, "score": grade.score, "date": grade.date}
-            )
+            student.setdefault("grades", []).append(grade.model_dump())
             student_found = True
             break
     if not student_found:
@@ -98,12 +94,12 @@ def add_grade(students: list[dict], student_id: int, subject: str, score: float)
     return True
 
 
-def student_report(students: list[dict], student_id: int) -> dict:
+def student_report(students: list[dict], student_id: int) -> StudentReport:
     for student in students:
         if student["id"] == student_id:
             grades = student.get("grades", [])
             if not grades:
-                return {"name": student['name'], "has_grades": False}
+                return StudentReport(name=student['name'], has_grades=False)
             elif grades:
                 total = 0
                 highest = grades[0]
@@ -117,16 +113,17 @@ def student_report(students: list[dict], student_id: int) -> dict:
                         
                 average = total / len(grades)
                 round(average, 2)
-                return {
-                    "name": student['name'],
-                    "has_grades": True,
-                    "grades_count": len(grades),
-                    "average": average,
-                    "highest_score": highest['score'],
-                    "highest_subject": highest['subject'],
-                    "lowest_score": lowest['score'],
-                    "lowest_subject": lowest['subject']
-                }
+                report = StudentReport(
+                    name=student['name'],
+                    has_grades=True,
+                    grades_count=len(grades),
+                    average=average,
+                    highest_score=highest['score'],
+                    highest_subject=highest['subject'],
+                    lowest_score=lowest['score'],
+                    lowest_subject=lowest['subject']
+                )
+                return report
     raise StudentNotFoundError("Student not found")
 
 
@@ -149,7 +146,7 @@ def import_students(students: list[dict], file_path: str) -> tuple[int, int]:
     imported_count = total - invalid
     return imported_count, invalid
 
-def class_report(students: list[dict]) -> dict | None:
+def class_report(students: list[dict]) -> ClassReport | None:
     if not students:
         return None
 
@@ -167,8 +164,8 @@ def class_report(students: list[dict]) -> dict | None:
     class_average = total_average / len(student_averages) if student_averages else 0
     top_students = sorted(student_averages, key=lambda x: x[1], reverse=True)[:3]
 
-    return {
-        "total_students": total_students,
-        "class_average": class_average,
-        "top_students": top_students
-    }
+    return ClassReport(
+        total_students=total_students,
+        class_average=round(class_average, 2),
+        top_students=top_students
+    )
