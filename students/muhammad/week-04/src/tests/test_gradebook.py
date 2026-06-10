@@ -16,7 +16,6 @@ def temp_json_file(monkeypatch):
         
         temp = {"students": []}
         storage.write_data(temp)
-        
         yield 
 
 
@@ -156,11 +155,9 @@ class TestGradeBook:
         grade = Grade(student_id=1, subject="Physics", score=63.0)
         gradebook.add_grade(grade)
         
-        captured = capsys.readouterr()
-        gradebook.student_report(1)
-        captured = capsys.readouterr()
+        captured = gradebook.student_report(1)
 
-        data  = storage.read_data()
+        data = storage.read_data()
         assert len(data['students']) == 1
         dict_student = {
             "id" : 1,
@@ -178,9 +175,8 @@ class TestGradeBook:
                 }
             ]
         }
-        assert  dict_student == data['students'][0]
-        assert captured.out == "Muhammad - 2 grades, average: 81.0, highest: 99.0 (Math), lowest: 63.0 (Physics)\n"   
-    
+        assert dict_student == data['students'][0]
+        assert captured == "Muhammad — 2 grades, average: 81.00, highest: 99.0 (Math), lowest: 63.0 (Physics)"   
     def test_csv_import_valid_rows_and_skip_invalid_rows(self) -> None:
         gradebook.import_students("students.csv")
         data  = storage.read_data()

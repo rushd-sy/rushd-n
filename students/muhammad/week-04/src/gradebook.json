@@ -1,0 +1,20 @@
+{
+    "students": [
+        {
+            "id": 1,
+            "name": "Muhammad",
+            "email": "muhammad@email.com",
+            "age": 21,
+            "subjects": [
+                {
+                    "subject-name": "Math",
+                    "score": 99.0
+                },
+                {
+                    "subject-name": "Phycisc",
+                    "score": 63.0
+                }
+            ]
+        }
+    ]
+}
