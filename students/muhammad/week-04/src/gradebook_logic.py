@@ -5,23 +5,20 @@ from exceptions import DuplicateEmailError, StudentNotFoundError
 from storage import read_data, write_data
 
 
+def get_new_id() -> int:
+    data = read_data()
+    return (1 if len(data['students']) == 0 else data['students'][-1]['id'] + 1)
+
 def add_student(student: "Student") -> str:
     data: dict[str, list] = read_data()
-
-    def get_new_id() -> int:
-        return (1 if len(data['students']) == 0 else data['students'][-1]['id'] + 1)
-    
-    new_student = {
-        "id": get_new_id(),
-        "name": student.name,
-        "email": student.email,
-        "age": student.age,
-        "subjects": []
-    }
-    
     for temp_student in data['students']:    
         if student.email == temp_student['email']:
             raise DuplicateEmailError()
+    
+    new_student = {
+        **student.model_dump(),
+        "subjects": []
+    }
     
     data['students'].append(new_student)
     write_data(data)
@@ -201,8 +198,7 @@ def import_students(csv_file: str) -> str:
             
             try:
                 age = int(age_str.strip())
-                student = Student(id=0, name=name, email=email, age=age)
-                # Call add_student but catch exceptions
+                student = Student(id=get_new_id(), name=name, email=email, age=age)
                 try:
                     add_student(student)
                     imported += 1
