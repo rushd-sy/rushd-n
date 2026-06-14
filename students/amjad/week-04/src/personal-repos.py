@@ -3,7 +3,8 @@ from dotenv import load_dotenv
 import httpx
 
 load_dotenv() 
-
+if "GITHUB_TOKEN" not in os.environ:
+    raise ValueError("GITHUB_TOKEN environment variable is not set")
 github_token = os.environ.get("GITHUB_TOKEN")
 
 headers = {
