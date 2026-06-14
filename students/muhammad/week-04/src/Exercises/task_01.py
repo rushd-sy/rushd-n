@@ -18,6 +18,13 @@ def main():
     }
 
     response = httpx.get(url, params=params)
+    
+    response.raise_for_status()
+    if response.status_code == 403 and "rate_limit" in response.text.lower():
+        raise RuntimeError("Rate limit exceeded")
+    if response.status_code == 404:
+        raise ValueError("User not found")
+
     data = response.json()
     repos: list[Repo] = []
 
