@@ -13,9 +13,8 @@ def get_github_token():
     
     return token
 
-def main():
 
-    
+def fetch_private_repos():
     url = "https://api.github.com/user/repos"
     token = get_github_token()
     
@@ -45,24 +44,29 @@ def main():
         response.raise_for_status()
         
         repos = response.json()
-        
-        if not repos:
-            print("You have no private repositories.")
-            return
-
-        print(f"Found {len(repos)} private repositories:")
-        
-        for repo in repos:
-            print(f"Repo's name: {repo['name']}")
-            print(f"\tDescription: {repo['description']}")
-            print(f"\tLanguage: {repo['language']}")
-            print(f"\tStars: {repo['stargazers_count']}")
-            print(f"\tURL: {repo['url']}")
-            print()
-    
+        return repos
     except httpx.HTTPError as e:
         print(f"HTTP error: {e}")
         sys.exit(1)
+
+def main():
+    repos = fetch_private_repos()
+    
+    if not repos:
+        print("You have no private repositories.")
+        return
+
+    print(f"Found {len(repos)} private repositories:")
+    
+    for repo in repos:
+        print(f"Repo's name: {repo['name']}")
+        print(f"\tDescription: {repo['description']}")
+        print(f"\tLanguage: {repo['language']}")
+        print(f"\tStars: {repo['stargazers_count']}")
+        print(f"\tURL: {repo['url']}")
+        print()
+
+
 
 if __name__ == "__main__":
     main()

@@ -8,16 +8,10 @@ class Repo(BaseModel):
     url: str
 
 
+def fetch_last_repos(user: str) -> list:
 
-def main():
-    url = "https://api.github.com/users/mohammedbabelly20/repos"
-    params = {
-        "sort" : "starts",
-        "direction" : "desc",
-        "per_page" : 10
-    }
-
-    response = httpx.get(url, params=params)
+    url = f"https://api.github.com/users/{user}/repos"
+    response = httpx.get(url)
     
     response.raise_for_status()
     if response.status_code == 403 and "rate_limit" in response.text.lower():
@@ -36,6 +30,10 @@ def main():
             url=repo_data['html_url']
         )
         repos.append(repo)
+    return repos
+
+def main():
+    repos = fetch_last_repos(user="mohammedbabelly20")
     
     for ind, repo in enumerate(repos):
         print(f"Repo's num: {ind}")

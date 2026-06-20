@@ -2,16 +2,17 @@ import httpx
 import asyncio
 import time
 
-URLS = ["https://httpbin.org/delay/1"] * 10
 
-def fetch_sync():
+def fetch_sync(url="https://httpbin.org/delay/1"):
+    URLS = [url] * 10
     start = time.time()
     with httpx.Client() as client:
         for url in URLS:
             client.get(url)
     return time.time() - start
 
-async def fetch_async():
+async def fetch_async(url="https://httpbin.org/delay/1"):
+    URLS = [url] * 10
     start = time.time()
     async with httpx.AsyncClient() as client:
         tasks = [client.get(url) for url in URLS]
@@ -27,4 +28,5 @@ async def main():
     
     print(f"Async was {sync_time/async_time:.1f}x faster")
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
