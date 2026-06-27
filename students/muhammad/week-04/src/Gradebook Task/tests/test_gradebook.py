@@ -3,10 +3,11 @@ import pytest
 import os
 from tempfile import TemporaryDirectory
 
-from .. import storage
-from .. import main as gradebook
-from ..students import Student
-from ..grades import Grade
+import storage
+import gradebook
+from students import Student
+from grades import Grade
+
 @pytest.fixture(autouse=True)
 def temp_json_file(monkeypatch):
     with TemporaryDirectory() as temp_dir:
@@ -156,7 +157,7 @@ class TestGradeBook:
         grade = Grade(student_id=1, subject="Physics", score=63.0)
         gradebook.add_grade(grade)
         
-        captured = gradebook.student_report(1)
+        report = gradebook.student_report(1)
 
         data = storage.read_data()
         assert len(data['students']) == 1
@@ -177,7 +178,13 @@ class TestGradeBook:
             ]
         }
         assert dict_student == data['students'][0]
-        assert captured == "Muhammad — 2 grades, average: 81.00, highest: 99.0 (Math), lowest: 63.0 (Physics)"   
+        assert report['name'] == "Muhammad"
+        assert report['highest'] == 99
+        assert report['lowest'] == 63
+        assert report['highest_name'] == "Math"
+        assert report['lowest_name'] == "Physics"
+        assert report['average'] == 81
+    
     def test_csv_import_valid_rows_and_skip_invalid_rows(self) -> None:
         gradebook.import_students("students.csv")
         data  = storage.read_data()

@@ -9,7 +9,7 @@ def get_new_id() -> int:
     data = read_data()
     return (1 if len(data['students']) == 0 else data['students'][-1]['id'] + 1)
 
-def add_student(student: "Student") -> str:
+def add_student(student: "Student") -> Student:
     data: dict[str, list] = read_data()
     for temp_student in data['students']:    
         if student.email == temp_student['email']:
@@ -22,67 +22,45 @@ def add_student(student: "Student") -> str:
     
     data['students'].append(new_student)
     write_data(data)
-    return f"Student added with ID {new_student['id']}"
+    return student
 
-
-def list_students() -> list[str]:
-    data: dict[str, list] = read_data()
-    output = []
-    for student in data['students']:
-        output.append(f"{student['id']}- {student['name']} ({student['email']}, age {student['age']})")
-    return output
-
-
-def validate_id(student_id: int) -> bool:
-    data: dict = read_data()
-    for student in data['students']:
-        if student['id'] == student_id:
-            return True
-    raise StudentNotFoundError()
-
-
-def show_student(student_id: int) -> list[str]:
-    validate_id(student_id)
+def show_student(student_id: int) -> dict:
     data: dict[str, list] = read_data()
     
     for student in data['students']:
         if student_id == student['id']:
-            output = [f"{student['name']} ({student['email']}, age {student['age']})"]
-            if len(student['subjects']):
-                output.append("Grades: ")
-                for subject in student['subjects']:
-                    output.append(f"{subject['subject-name']} - {subject['score']}")
-            return output
-    return []  
+            return student
 
-def delete_student(student_id: int) -> str:
-    validate_id(student_id)
+    raise StudentNotFoundError
+
+def delete_student(student_id: int) -> bool:
     data: dict[str, list] = read_data()
     
     for ind, student in enumerate(data['students']):
         if student_id == student['id']:
             data['students'].pop(ind)
             write_data(data)
-            return f"Student {student_id} and their grades deleted"
-    return ""
+            return True
 
-def student_report(student_id: int) -> str:
-    validate_id(student_id)
+    raise StudentNotFoundError
+
+def student_report(student_id: int) -> dict:
     data: dict[str, list] = read_data()
-    
     for student in data['students']:
         if student_id == student['id']:
-            num_grades = len(student['subjects'])
-            if num_grades == 0:
-                return f"{student['name']} — 0 grades"
+            subjects = student['subjects']
+            num_grades = len(subjects)
             
+            if not num_grades:
+                return {"name" : student['name'], "num_grades" : 0}
+
             total = 0.0
             highest = -0.1
             highest_name: str = ""
             lowest = 100.1
             lowest_name: str = ""
-            
-            for subject in student['subjects']:
+
+            for subject in subjects:
                 total += subject['score']
                 if subject['score'] > highest:
                     highest = subject['score']
@@ -90,15 +68,24 @@ def student_report(student_id: int) -> str:
                 if subject['score'] < lowest:
                     lowest = subject['score']
                     lowest_name = subject['subject-name']
-            
+
             average = total / num_grades
-            return f"{student['name']} — {num_grades} grades, average: {average:.2f}, highest: {highest} ({highest_name}), lowest: {lowest} ({lowest_name})"
+            
+            student_data: dict = {
+                "average" : average,
+                "highest_name" : highest_name,
+                "lowest_name" : lowest_name,
+                "lowest" : lowest,
+                "highest" : highest,
+                "num_grades" : num_grades,
+                "name" : student['name']
+            }
+            return student_data
     
-    return "" 
+    raise StudentNotFoundError
 
 
-def update_student(student_id: int, fields: list, values: list) -> str:
-    validate_id(student_id)
+def update_student(student_id: int, fields: list, values: list) -> bool:
     data: dict[str, list] = read_data()
     
     for ind, student in enumerate(data['students']):
@@ -124,23 +111,24 @@ def update_student(student_id: int, fields: list, values: list) -> str:
                         raise ValueError("Age must be an integer")
                     temp_instance['age'] = int(value)
             
-            Student(name=temp_instance['name'], email=temp_instance['email'], age=temp_instance['age'])
+            Student(id=get_new_id(), name=temp_instance['name'], email=temp_instance['email'], age=temp_instance['age'])
             
             data['students'][ind]['name'] = temp_instance['name']
             data['students'][ind]['email'] = temp_instance['email']
             data['students'][ind]['age'] = temp_instance['age']
             write_data(data)
-            return f"Student {student_id} updated"
+            return True
     
-    return ""
+    raise StudentNotFoundError
 
 
-def class_report() -> list[str]:
+def class_report() -> dict:
     data = read_data()
     total_students = len(data['students'])
     
+    report = {}
     if total_students == 0:
-        return ["No students available"]
+        return report
 
     total_avg = 0
     averages: list[dict] = []
@@ -162,25 +150,12 @@ def class_report() -> list[str]:
     total_avg = total_avg / total_students
     averages = sorted(averages, key=lambda x: x['average'], reverse=True)
 
-    output = []
-    output.append(f"Total Students: {total_students}")
-    output.append(f"Class average: {total_avg:.2f}")
-    
-    top_n = min(3, total_students)
-    if total_students >= 2:
-        output.append(f"Top {top_n} students: ")
-    else:
-        output.append("The only student: ")
-    
-    positions = ["1st-student", "2nd-student", "3rd-student"]
-    for i in range(top_n):
-        output.append(f" {positions[i]}: ")
-        output.append(f"    {averages[i]['name']}, average: {averages[i]['average']:.2f}")
-    
-    return output
+    report.setdefault('total_students', total_students)
+    report.setdefault('total_avg', total_avg)
+    report.setdefault('averages', averages)
+    return report
 
-
-def import_students(csv_file: str) -> str:
+def import_students(csv_file: str) -> tuple[int, int] :
     imported = 0
     skipped = 0
     
@@ -207,10 +182,10 @@ def import_students(csv_file: str) -> str:
             except ValueError:
                 skipped += 1
     
-    return f"Imported {imported} students, {skipped} rows skipped (invalid data)"
+    return imported, skipped
 
 
-def add_grade(grade: "Grade") -> str:
+def add_grade(grade: "Grade") -> bool:
     data: dict[str, list] = read_data()
     
     for ind, student in enumerate(data['students']):
@@ -221,6 +196,6 @@ def add_grade(grade: "Grade") -> str:
             }
             data['students'][ind]['subjects'].append(subject)
             write_data(data)
-            return f"Grade added for student {grade.student_id}"
+            return True
     
     raise StudentNotFoundError()
