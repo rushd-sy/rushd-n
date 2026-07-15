@@ -1,6 +1,5 @@
-from ast import List
 from datetime import datetime
-from typing_extensions import Annotated
+from typing import Annotated
 
 from fastapi import FastAPI, HTTPException, Path, Query
 from models import Author, AuthorCreate, AuthorOut, BookCreate, Book, BookOut, LoanCreate, LoanOut, Loan
