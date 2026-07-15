@@ -21,7 +21,7 @@ async def get_books(
 ):
     books = load_books()
     books_out = []
-    for book in books[offset:offset + limit]:
+    for book in books:
         if author and book["author"] != author:
             continue
         if genre and book["genre"] != genre:
@@ -29,7 +29,9 @@ async def get_books(
         if min_year and book["year"] < min_year:
             continue
         books_out.append(BookOut(**book))
-    return {"books": books_out}
+        
+    books_out = books_out[offset:offset + limit]
+    return {"books": [BookOut(**book) for book in books_out], "total": len(books_out), "offset": offset, "limit": limit}
 
 @app.get("/books/{book_id}")
 async def get_book(book_id: Annotated[int, Path(gt=0)]):
