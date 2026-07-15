@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing_extensions import Annotated
 
-from fastapi import FastAPI, Path, Query
+from fastapi import FastAPI, HTTPException, Path, Query
 from models import Author, AuthorCreate, AuthorOut, BookCreate, Book, BookOut, LoanCreate, LoanOut, Loan
 from storage import load_authors, load_books, load_loans, save_authors, save_books, save_loans
 
@@ -29,7 +29,6 @@ async def get_books(
         if min_year and book["year"] < min_year:
             continue
         books_out.append(BookOut(**book))
-
     return {"books": books_out}
 
 @app.get("/books/{book_id}")
@@ -38,6 +37,7 @@ async def get_book(book_id: Annotated[int, Path(gt=0)]):
     for book in books:
         if book["book_id"] == book_id:
             return {"book": BookOut(**book)}
+    raise HTTPException(status_code=404, detail="Book not found")
 
 
 @app.post("/books")
@@ -58,6 +58,7 @@ async def update_book(book_id: Annotated[int, Path(gt=0)], book: BookCreate):
             books[i] = updated_book.model_dump()
             save_books(books)
             return {"message": "Book updated", "book": BookOut(**books[i])}
+    raise HTTPException(status_code=404, detail="Book not found")
 
 @app.delete("/books/{book_id}")
 async def delete_book(book_id: Annotated[int, Path(gt=0)]):
@@ -94,7 +95,8 @@ async def get_loan(loan_id: Annotated[int, Path(gt=0)]):
     for loan in loans:
         if loan["loan_id"] == loan_id:
             return {"loan": LoanOut(**loan)}
-        
+    raise HTTPException(status_code=404, detail="Loan not found")
+
 @app.put("/loans/{loan_id}")
 async def update_loan(loan_id: Annotated[int, Path(gt=0)], loan: LoanCreate):
     loans = load_loans()
@@ -104,7 +106,8 @@ async def update_loan(loan_id: Annotated[int, Path(gt=0)], loan: LoanCreate):
             loans[i] = updated_loan.model_dump()
             save_loans(loans)
             return {"message": "Loan updated", "loan": LoanOut(**loans[i])}
-        
+    raise HTTPException(status_code=404, detail="Loan not found")
+
 @app.post("/authors")
 async def create_author(author: AuthorCreate):
     authors = load_authors()
@@ -125,7 +128,8 @@ async def get_author(author_id: Annotated[int, Path(gt=0)]):
     for author in authors:
         if author["author_id"] == author_id:
             return {"author": AuthorOut(**author)}
-        
+    raise HTTPException(status_code=404, detail="Author not found")
+
 @app.put("/authors/{author_id}")
 async def update_author(author_id: Annotated[int, Path(gt=0)], author: AuthorCreate):
     authors = load_authors()
@@ -135,3 +139,4 @@ async def update_author(author_id: Annotated[int, Path(gt=0)], author: AuthorCre
             authors[i] = updated_author.model_dump()
             save_authors(authors)
             return {"message": "Author updated", "author": AuthorOut(**authors[i])}
+    raise HTTPException(status_code=404, detail="Author not found")
