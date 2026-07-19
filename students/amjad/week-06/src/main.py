@@ -121,7 +121,7 @@ async def create_loan(loan: LoanCreate):
     """
     loans = load_loans()    
     created_at = datetime.now().isoformat()
-    new_loan = Loan(loan_id=max([loan["loan_id"] for loan in loans], default=0) + 1, **loan.model_dump(), loan_date=created_at)
+    new_loan = Loan(loan_id=max([stored_loan["loan_id"] for stored_loan in loans], default=0) + 1, **loan.model_dump(), loan_date=created_at)
     loans.append(new_loan.model_dump())
     save_loans(loans)
     return LoanOut(**new_loan.model_dump())
@@ -182,7 +182,7 @@ async def create_author(author: AuthorCreate):
     """
     authors = load_authors()
     created_at = datetime.now().isoformat()
-    new_author = Author(author_id=max([author["author_id"] for author in authors], default=0) + 1, **author.model_dump(), books=[], created_at=created_at)
+    new_author = Author(author_id=max([stored_author["author_id"] for stored_author in authors], default=0) + 1, **author.model_dump(), books=[], created_at=created_at)
     authors.append(new_author.model_dump())
     save_authors(authors)
     return AuthorOut(**new_author.model_dump())
