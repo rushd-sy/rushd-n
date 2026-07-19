@@ -11,7 +11,7 @@ app = FastAPI()
 async def root():
     return {"message": "running"}
 
-@app.get("/books", response_model=dict)
+@app.get("/books")
 async def get_books(
     author: str | None = None,
     genre: str | None = None,
@@ -19,6 +19,14 @@ async def get_books(
     offset: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=20)] = 10
 ):
+    """
+    Retrieve a list of books with optional filters.
+    - **author**: Filter books by author name.
+    - **genre**: Filter books by genre.
+    - **min_year**: Filter books published after a certain year.
+    - **offset**: The number of items to skip before starting to collect the result set.
+    - **limit**: The maximum number of items to return (default is 10, maximum is 20).
+    """
     books = load_books()
     books_out = []
     for book in books:
@@ -36,6 +44,11 @@ async def get_books(
 
 @app.get("/books/{book_id}", response_model=BookOut)
 async def get_book(book_id: Annotated[int, Path(gt=0)]):
+    """
+    Retrieve a book by its ID.
+    - **book_id**: The ID of the book to retrieve and must be a positive integer.
+    - Returns the book details if found, otherwise raises a 404 error.
+    """
     books = load_books()
     for book in books:
         if book["book_id"] == book_id:
@@ -45,6 +58,11 @@ async def get_book(book_id: Annotated[int, Path(gt=0)]):
 
 @app.post("/books", response_model=BookOut)
 async def create_book(book: BookCreate):
+    """
+    Create a new book.
+    - **book**: The details of the book to create.
+    - Returns the created book details.
+    """
     books = load_books()    
     created_at = datetime.now().isoformat()
     new_book = Book(book_id=max([stored_book["book_id"] for stored_book in books], default=0) + 1, **book.model_dump(), created_at=created_at)
@@ -54,6 +72,12 @@ async def create_book(book: BookCreate):
 
 @app.put("/books/{book_id}", response_model=BookOut)
 async def update_book(book_id: Annotated[int, Path(gt=0)], book: BookCreate):
+    """
+    Update an existing book.
+    - **book_id**: The ID of the book to update and must be a positive integer.
+    - **book**: The updated details of the book.
+    - Returns the updated book details if found, otherwise raises a 404 error.
+    """
     books = load_books()
     for i, b in enumerate(books):
         if b["book_id"] == book_id:
@@ -65,6 +89,11 @@ async def update_book(book_id: Annotated[int, Path(gt=0)], book: BookCreate):
 
 @app.delete("/books/{book_id}", response_model=BookOut)
 async def delete_book(book_id: Annotated[int, Path(gt=0)]):
+    """
+    Delete a book by its ID.
+    - **book_id**: The ID of the book to delete and must be a positive integer.
+    - Returns the deleted book details if found, otherwise raises a 404 error.
+    """
     books = load_books()
     for i, book in enumerate(books):
         if book["book_id"] == book_id:
@@ -76,11 +105,20 @@ async def delete_book(book_id: Annotated[int, Path(gt=0)]):
 
 @app.get("/loans", response_model=list[LoanOut])
 async def get_loans():
+    """
+    Retrieve all loans.
+    - Returns a list of all loans.
+    """
     loans = load_loans()
     return [LoanOut(**loan) for loan in loans]
 
 @app.post("/loans", response_model=LoanOut)
 async def create_loan(loan: LoanCreate):
+    """
+    Create a new loan.
+    - **loan**: The details of the loan to create.
+    - Returns the created loan details.
+    """
     loans = load_loans()    
     created_at = datetime.now().isoformat()
     new_loan = Loan(loan_id=max([loan["loan_id"] for loan in loans], default=0) + 1, **loan.model_dump(), loan_date=created_at)
@@ -91,6 +129,11 @@ async def create_loan(loan: LoanCreate):
 
 @app.delete("/loans/{loan_id}", response_model=LoanOut)
 async def delete_loan(loan_id: Annotated[int, Path(gt=0)]):
+    """
+    Delete a loan by its ID.
+    - **loan_id**: The ID of the loan to delete and must be a positive integer.
+    - Returns the deleted loan details if found, otherwise raises a 404 error.
+    """
     loans = load_loans()
     for i, loan in enumerate(loans):
         if loan["loan_id"] == loan_id:
@@ -102,6 +145,11 @@ async def delete_loan(loan_id: Annotated[int, Path(gt=0)]):
 
 @app.get("/loans/{loan_id}", response_model=LoanOut)
 async def get_loan(loan_id: Annotated[int, Path(gt=0)]):
+    """
+    Retrieve a loan by its ID.
+    - **loan_id**: The ID of the loan to retrieve and must be a positive integer.
+    - Returns the loan details if found, otherwise raises a 404 error.
+    """
     loans = load_loans()
     for loan in loans:
         if loan["loan_id"] == loan_id:
@@ -110,6 +158,12 @@ async def get_loan(loan_id: Annotated[int, Path(gt=0)]):
 
 @app.put("/loans/{loan_id}", response_model=LoanOut)
 async def update_loan(loan_id: Annotated[int, Path(gt=0)], loan: LoanCreate):
+    """
+    Update an existing loan.
+    - **loan_id**: The ID of the loan to update and must be a positive integer.
+    - **loan**: The updated details of the loan.
+    - Returns the updated loan details if found, otherwise raises a 404 error.
+    """
     loans = load_loans()
     for i, l in enumerate(loans):
         if l["loan_id"] == loan_id:
@@ -121,6 +175,11 @@ async def update_loan(loan_id: Annotated[int, Path(gt=0)], loan: LoanCreate):
 
 @app.post("/authors", response_model=AuthorOut)
 async def create_author(author: AuthorCreate):
+    """
+    Create a new author.
+    - **author**: The details of the author to create.
+    - Returns the created author details.
+    """
     authors = load_authors()
     created_at = datetime.now().isoformat()
     new_author = Author(author_id=max([author["author_id"] for author in authors], default=0) + 1, **author.model_dump(), books=[], created_at=created_at)
@@ -130,11 +189,20 @@ async def create_author(author: AuthorCreate):
 
 @app.get("/authors", response_model=list[AuthorOut])
 async def get_authors():
+    """
+    Retrieve all authors.
+    - Returns a list of all authors.
+    """
     authors = load_authors()
     return [AuthorOut(**author) for author in authors]
 
 @app.get("/authors/{author_id}", response_model=AuthorOut)
 async def get_author(author_id: Annotated[int, Path(gt=0)]):
+    """
+    Retrieve an author by their ID.
+    - **author_id**: The ID of the author to retrieve and must be a positive integer.
+    - Returns the author details if found, otherwise raises a 404 error.
+    """
     authors = load_authors()
     for author in authors:
         if author["author_id"] == author_id:
@@ -143,6 +211,12 @@ async def get_author(author_id: Annotated[int, Path(gt=0)]):
 
 @app.put("/authors/{author_id}", response_model=AuthorOut)
 async def update_author(author_id: Annotated[int, Path(gt=0)], author: AuthorCreate):
+    """
+    Update an existing author.
+    - **author_id**: The ID of the author to update and must be a positive integer.
+    - **author**: The updated details of the author.
+    - Returns the updated author details if found, otherwise raises a 404 error.
+    """
     authors = load_authors()
     for i, a in enumerate(authors):
         if a["author_id"] == author_id:
