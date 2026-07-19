@@ -225,3 +225,19 @@ async def update_author(author_id: Annotated[int, Path(gt=0)], author: AuthorCre
             save_authors(authors)
             return AuthorOut(**authors[i])
     raise HTTPException(status_code=404, detail="Author not found")
+
+@app.delete("/authors/{author_id}", response_model=AuthorOut)
+async def delete_author(author_id: Annotated[int, Path(gt=0)]):
+    """
+    Delete an author by their ID.
+    - **author_id**: The ID of the author to delete and must be a positive integer.
+    - Returns the deleted author details if found, otherwise raises a 404 error.
+    """
+    authors = load_authors()
+    for i, author in enumerate(authors):
+        if author["author_id"] == author_id:
+            deleted_author = AuthorOut(**authors[i])
+            authors.pop(i)
+            save_authors(authors)
+            return deleted_author
+    raise HTTPException(status_code=404, detail="Author not found")
