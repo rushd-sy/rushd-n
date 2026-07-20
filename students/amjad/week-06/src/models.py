@@ -5,9 +5,10 @@ T = TypeVar('T')
 
 class Page(BaseModel, Generic[T]):
     items: list[T]
-    total: int
-    offset: int
-    limit: int
+    total: int 
+    offset: int | None = None
+    limit: int | None = None
+
 
 class BookCreate(BaseModel):
     title: str

@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Annotated
 
 from fastapi import FastAPI, HTTPException, Path, Query
-from models import Author, AuthorCreate, AuthorOut, BookCreate, Book, BookOut, LoanCreate, LoanOut, Loan
+from models import Author, AuthorCreate, AuthorOut, BookCreate, Book, BookOut, LoanCreate, LoanOut, Loan, Page
 from storage import load_authors, load_books, load_loans, save_authors, save_books, save_loans
 
 app = FastAPI()
@@ -11,14 +11,14 @@ app = FastAPI()
 async def root():
     return {"message": "running"}
 
-@app.get("/books")
+@app.get("/books", response_model=Page[BookOut])
 async def get_books(
     author: str | None = None,
     genre: str | None = None,
     min_year: int | None = None,
     offset: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=20)] = 10
-):
+) -> Page[BookOut]:
     """
     Retrieve a list of books with optional filters.
     - **author**: Filter books by author name.
@@ -40,7 +40,7 @@ async def get_books(
     
     total = len(books_out)
     books_out = books_out[offset:offset + limit]
-    return {"books": books_out, "total": total, "offset": offset, "limit": limit}
+    return Page[BookOut](items=books_out, total=total, offset=offset, limit=limit)
 
 @app.get("/books/{book_id}", response_model=BookOut)
 async def get_book(book_id: Annotated[int, Path(gt=0)]) -> BookOut:
@@ -103,14 +103,14 @@ async def delete_book(book_id: Annotated[int, Path(gt=0)]) -> BookOut:
             return deleted_book
     raise HTTPException(status_code=404, detail="Book not found")
 
-@app.get("/loans", response_model=list[LoanOut])
-async def get_loans():
+@app.get("/loans", response_model=Page[LoanOut])
+async def get_loans() -> Page[LoanOut]:
     """
     Retrieve all loans.
     - Returns a list of all loans.
     """
     loans = load_loans()
-    return [LoanOut(**loan) for loan in loans]
+    return Page[LoanOut](items=[LoanOut(**loan) for loan in loans], total=len(loans))
 
 @app.post("/loans", response_model=LoanOut)
 async def create_loan(loan: LoanCreate) -> LoanOut:
@@ -187,14 +187,14 @@ async def create_author(author: AuthorCreate) -> AuthorOut:
     save_authors(authors)
     return AuthorOut(**new_author.model_dump())
 
-@app.get("/authors", response_model=list[AuthorOut])
-async def get_authors():
+@app.get("/authors", response_model=Page[AuthorOut])
+async def get_authors() -> Page[AuthorOut]:
     """
     Retrieve all authors.
     - Returns a list of all authors.
     """
     authors = load_authors()
-    return [AuthorOut(**author) for author in authors]
+    return Page[AuthorOut](items=[AuthorOut(**author) for author in authors], total=len(authors))
 
 @app.get("/authors/{author_id}", response_model=AuthorOut)
 async def get_author(author_id: Annotated[int, Path(gt=0)]) -> AuthorOut:
