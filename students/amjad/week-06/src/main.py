@@ -43,7 +43,7 @@ async def get_books(
     return {"books": books_out, "total": total, "offset": offset, "limit": limit}
 
 @app.get("/books/{book_id}", response_model=BookOut)
-async def get_book(book_id: Annotated[int, Path(gt=0)]):
+async def get_book(book_id: Annotated[int, Path(gt=0)]) -> BookOut:
     """
     Retrieve a book by its ID.
     - **book_id**: The ID of the book to retrieve and must be a positive integer.
@@ -57,7 +57,7 @@ async def get_book(book_id: Annotated[int, Path(gt=0)]):
 
 
 @app.post("/books", response_model=BookOut)
-async def create_book(book: BookCreate):
+async def create_book(book: BookCreate) -> BookOut:
     """
     Create a new book.
     - **book**: The details of the book to create.
@@ -71,7 +71,7 @@ async def create_book(book: BookCreate):
     return BookOut(**new_book.model_dump())
 
 @app.put("/books/{book_id}", response_model=BookOut)
-async def update_book(book_id: Annotated[int, Path(gt=0)], book: BookCreate):
+async def update_book(book_id: Annotated[int, Path(gt=0)], book: BookCreate) -> BookOut:
     """
     Update an existing book.
     - **book_id**: The ID of the book to update and must be a positive integer.
@@ -88,7 +88,7 @@ async def update_book(book_id: Annotated[int, Path(gt=0)], book: BookCreate):
     raise HTTPException(status_code=404, detail="Book not found")
 
 @app.delete("/books/{book_id}", response_model=BookOut)
-async def delete_book(book_id: Annotated[int, Path(gt=0)]):
+async def delete_book(book_id: Annotated[int, Path(gt=0)]) -> BookOut:
     """
     Delete a book by its ID.
     - **book_id**: The ID of the book to delete and must be a positive integer.
@@ -113,7 +113,7 @@ async def get_loans():
     return [LoanOut(**loan) for loan in loans]
 
 @app.post("/loans", response_model=LoanOut)
-async def create_loan(loan: LoanCreate):
+async def create_loan(loan: LoanCreate) -> LoanOut:
     """
     Create a new loan.
     - **loan**: The details of the loan to create.
@@ -128,7 +128,7 @@ async def create_loan(loan: LoanCreate):
     
 
 @app.delete("/loans/{loan_id}", response_model=LoanOut)
-async def delete_loan(loan_id: Annotated[int, Path(gt=0)]):
+async def delete_loan(loan_id: Annotated[int, Path(gt=0)]) -> LoanOut:
     """
     Delete a loan by its ID.
     - **loan_id**: The ID of the loan to delete and must be a positive integer.
@@ -144,7 +144,7 @@ async def delete_loan(loan_id: Annotated[int, Path(gt=0)]):
     raise HTTPException(status_code=404, detail="Loan not found")
 
 @app.get("/loans/{loan_id}", response_model=LoanOut)
-async def get_loan(loan_id: Annotated[int, Path(gt=0)]):
+async def get_loan(loan_id: Annotated[int, Path(gt=0)]) -> LoanOut:
     """
     Retrieve a loan by its ID.
     - **loan_id**: The ID of the loan to retrieve and must be a positive integer.
@@ -157,7 +157,7 @@ async def get_loan(loan_id: Annotated[int, Path(gt=0)]):
     raise HTTPException(status_code=404, detail="Loan not found")
 
 @app.put("/loans/{loan_id}", response_model=LoanOut)
-async def update_loan(loan_id: Annotated[int, Path(gt=0)], loan: LoanCreate):
+async def update_loan(loan_id: Annotated[int, Path(gt=0)], loan: LoanCreate) -> LoanOut:
     """
     Update an existing loan.
     - **loan_id**: The ID of the loan to update and must be a positive integer.
@@ -174,7 +174,7 @@ async def update_loan(loan_id: Annotated[int, Path(gt=0)], loan: LoanCreate):
     raise HTTPException(status_code=404, detail="Loan not found")
 
 @app.post("/authors", response_model=AuthorOut)
-async def create_author(author: AuthorCreate):
+async def create_author(author: AuthorCreate) -> AuthorOut:
     """
     Create a new author.
     - **author**: The details of the author to create.
@@ -197,7 +197,7 @@ async def get_authors():
     return [AuthorOut(**author) for author in authors]
 
 @app.get("/authors/{author_id}", response_model=AuthorOut)
-async def get_author(author_id: Annotated[int, Path(gt=0)]):
+async def get_author(author_id: Annotated[int, Path(gt=0)]) -> AuthorOut:
     """
     Retrieve an author by their ID.
     - **author_id**: The ID of the author to retrieve and must be a positive integer.
@@ -210,7 +210,7 @@ async def get_author(author_id: Annotated[int, Path(gt=0)]):
     raise HTTPException(status_code=404, detail="Author not found")
 
 @app.put("/authors/{author_id}", response_model=AuthorOut)
-async def update_author(author_id: Annotated[int, Path(gt=0)], author: AuthorCreate):
+async def update_author(author_id: Annotated[int, Path(gt=0)], author: AuthorCreate) -> AuthorOut:
     """
     Update an existing author.
     - **author_id**: The ID of the author to update and must be a positive integer.
@@ -227,7 +227,7 @@ async def update_author(author_id: Annotated[int, Path(gt=0)], author: AuthorCre
     raise HTTPException(status_code=404, detail="Author not found")
 
 @app.delete("/authors/{author_id}", response_model=AuthorOut)
-async def delete_author(author_id: Annotated[int, Path(gt=0)]):
+async def delete_author(author_id: Annotated[int, Path(gt=0)]) -> AuthorOut:
     """
     Delete an author by their ID.
     - **author_id**: The ID of the author to delete and must be a positive integer.
