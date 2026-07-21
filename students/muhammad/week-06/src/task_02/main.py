@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Annotated
 
 from fastapi import FastAPI, HTTPException, Query, Path
-from models import book_create, book_model, book_response, author_create, author_model, author_response, loan_create, loan_model, loan_response
+from models import BookCreate, BookModel, BookResponse, AuthorCreate, AuthorModel, AuthorResponse, LoanCreate, LoanModel, LoanResponse
 from storage import load_books, save_books, load_authors, save_authors, load_loans, save_loans
 
 app = FastAPI()
@@ -34,12 +34,12 @@ async def get_books(
     return books_out
 
 
-@app.get("/books/{book_id}", response_model=book_response)
-async def get_book(book_id: Annotated[int, Path(gt=1)]) -> book_response:
+@app.get("/books/{book_id}", response_model=BookResponse)
+async def get_book(book_id: Annotated[int, Path(gt=1)]) -> BookResponse:
     books = load_books()
     for book in books:
         if book["book_id"] == book_id:
-            return book_response(
+            return BookResponse(
                 book_id=book["book_id"],
                 title=book["title"],   
                 author=book["author"],
@@ -49,11 +49,11 @@ async def get_book(book_id: Annotated[int, Path(gt=1)]) -> book_response:
     raise HTTPException(status_code=404, detail="Book not found")
 
 
-@app.post("/books", response_model=book_response)
-async def create_book(request_book: book_create) -> book_response:
+@app.post("/books", response_model=BookResponse)
+async def create_book(request_book: BookCreate) -> BookResponse:
     books = load_books()
 
-    created_book = book_model(
+    created_book = BookModel(
         book_id=max([book["book_id"] for book in books], default=0) + 1,
         **request_book.model_dump(),
         creation_date=datetime.now().isoformat(),
@@ -61,19 +61,19 @@ async def create_book(request_book: book_create) -> book_response:
     books.append(created_book.model_dump())
     save_books(books)
 
-    respond = book_response(
+    respond = BookResponse(
         **created_book.model_dump(),
     )
 
     return respond
 
-@app.put("/books/{book_id}", response_model=book_response)
-async def update_book(book_id: int, request_book: book_create) -> book_response:
+@app.put("/books/{book_id}", response_model=BookResponse)
+async def update_book(book_id: int, request_book: BookCreate) -> BookResponse:
     books = load_books()
     
     for index, book in enumerate(books):
         if book["book_id"] == book_id:
-            UpdatedBook = book_model ( # I have a question about this part
+            UpdatedBook = BookModel ( # I have a question about this part
                 book_id=book_id,
                 **request_book.model_dump(),
                 creation_date=book["creation_date"],
@@ -82,7 +82,7 @@ async def update_book(book_id: int, request_book: book_create) -> book_response:
             books[index] = UpdatedBook.model_dump()
             save_books(books)
             
-            return book_response(
+            return BookResponse(
                 **UpdatedBook.model_dump()
             )
     
@@ -126,8 +126,8 @@ async def get_authors(
     authors_out = authors_out[offset:offset + limit]
     return authors_out
 
-@app.get("/authors/{author_id}", response_model=author_response)
-async def get_author(author_id: Annotated[int, Path(gt=0)]) -> author_response:
+@app.get("/authors/{author_id}", response_model=AuthorResponse)
+async def get_author(author_id: Annotated[int, Path(gt=0)]) -> AuthorResponse:
     """
     Get a specific author by ID.
     
@@ -136,18 +136,18 @@ async def get_author(author_id: Annotated[int, Path(gt=0)]) -> author_response:
     authors = load_authors()
     for author in authors:
         if author["author_id"] == author_id:
-            return author_response(
+            return AuthorResponse(
                 author_id=author["author_id"],
                 name=author["name"],
                 birth_year=author["birth_year"],
             )
     raise HTTPException(status_code=404, detail="Author not found")
 
-@app.post("/authors", response_model=author_response)
-async def create_author(request_author: author_create) -> author_response:
+@app.post("/authors", response_model=AuthorResponse)
+async def create_author(request_author: AuthorCreate) -> AuthorResponse:
     authors = load_authors()
 
-    created_author = author_model(
+    created_author = AuthorModel(
         author_id=max([author["author_id"] for author in authors], default=0) + 1,
         **request_author.model_dump(),
         added_at=datetime.now().isoformat(),
@@ -155,22 +155,22 @@ async def create_author(request_author: author_create) -> author_response:
     authors.append(created_author.model_dump())
     save_authors(authors)
 
-    return author_response(
+    return AuthorResponse(
         **created_author.model_dump(),
     )
     
     
     
-@app.put("/authors/{author_id}", response_model=author_response)
+@app.put("/authors/{author_id}", response_model=AuthorResponse)
 async def update_author(
     author_id: Annotated[int, Path(gt=0)],
-    request_author: author_create
-) -> author_response:
+    request_author: AuthorCreate
+) -> AuthorResponse:
     authors = load_authors()
     
     for index, author in enumerate(authors):
         if author["author_id"] == author_id:
-            updated_author = author_model(
+            updated_author = AuthorModel(
                 author_id=author_id,
                 **request_author.model_dump(),
                 added_at=author["added_at"], 
@@ -179,7 +179,7 @@ async def update_author(
             authors[index] = updated_author.model_dump()
             save_authors(authors)
             
-            return author_response(
+            return AuthorResponse(
                 **updated_author.model_dump()
             )
     
@@ -224,23 +224,23 @@ async def get_loans(
     return loans_out
 
 
-@app.get("/loans/{loan_id}", response_model=loan_response)
-async def get_loan(loan_id: Annotated[int, Path(gt=0)]) -> loan_response:
+@app.get("/loans/{loan_id}", response_model=LoanResponse)
+async def get_loan(loan_id: Annotated[int, Path(gt=0)]) -> LoanResponse:
     loans = load_loans()
     for loan in loans:
         if loan["loan_id"] == loan_id:
-            return loan_response(
+            return LoanResponse(
                 loan_id=loan["loan_id"],
                 date=loan["date"],
             )
     raise HTTPException(status_code=404, detail="Loan not found")
 
 
-@app.post("/loans", response_model=loan_response)
-async def create_loan(request_loan: loan_create) -> loan_response:
+@app.post("/loans", response_model=LoanResponse)
+async def create_loan(request_loan: LoanCreate) -> LoanResponse:
     loans = load_loans()
 
-    created_loan = loan_model(
+    created_loan = LoanModel(
         loan_id=max([loan["loan_id"] for loan in loans], default=0) + 1,
         **request_loan.model_dump(),
         added_at=datetime.now().isoformat(),
@@ -248,21 +248,21 @@ async def create_loan(request_loan: loan_create) -> loan_response:
     loans.append(created_loan.model_dump())
     save_loans(loans)
 
-    return loan_response(
+    return LoanResponse(
         **created_loan.model_dump(),
     )
 
 
-@app.put("/loans/{loan_id}", response_model=loan_response)
+@app.put("/loans/{loan_id}", response_model=LoanResponse)
 async def update_loan(
     loan_id: Annotated[int, Path(gt=0)],
-    request_loan: loan_create
-) -> loan_response:
+    request_loan: LoanCreate
+) -> LoanResponse:
     loans = load_loans()
     
     for index, loan in enumerate(loans):
         if loan["loan_id"] == loan_id:
-            updated_loan = loan_model(
+            updated_loan = LoanModel(
                 loan_id=loan_id,
                 **request_loan.model_dump(),
                 added_at=loan["added_at"],
@@ -271,7 +271,7 @@ async def update_loan(
             loans[index] = updated_loan.model_dump()
             save_loans(loans)
             
-            return loan_response(
+            return LoanResponse(
                 **updated_loan.model_dump()
             )
     

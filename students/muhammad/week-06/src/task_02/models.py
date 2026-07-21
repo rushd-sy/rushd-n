@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-class book_model(BaseModel):
+class BookModel(BaseModel):
     book_id: int
     title: str
     author: str
@@ -8,14 +8,14 @@ class book_model(BaseModel):
     publish_year: int
     creation_date: str
 
-class book_create(BaseModel):
+class BookCreate(BaseModel):
     title: str
     author: str
     genre: str
     publish_year: int
 
 
-class book_response(BaseModel):
+class BookResponse(BaseModel):
     book_id: int
     title: str
     author: str
@@ -24,30 +24,30 @@ class book_response(BaseModel):
 
 
 
-class author_model(BaseModel):
+class AuthorModel(BaseModel):
     author_id: int
     name: str
     birth_year: int
     added_at: str
     
-class author_create(BaseModel):
+class AuthorCreate(BaseModel):
     name: str
     birth_year: int
 
-class author_response(BaseModel):
+class AuthorResponse(BaseModel):
     author_id: int
     name: str
     birth_year: int
 
-class loan_model(BaseModel):
+class LoanModel(BaseModel):
     loan_id: int
     date: str
     added_at: str
     
-class loan_create(BaseModel):
+class LoanCreate(BaseModel):
     name: str
     date: str
 
-class loan_response(BaseModel):
+class LoanResponse(BaseModel):
     loan_id: int
     date: str
