@@ -14,7 +14,7 @@ async def get_books(
         genre : str | None = None,
         min_publish_year : int | None = None,
         offset : Annotated[int, Query(ge=0)] = 0,
-        limit : Annotated[int, Query(ge=1)] = 10,
+        limit: Annotated[int, Query(ge=1, le=20)] = 10,
     ) -> Page[BookResponse]:
     """
         A cool docstring
@@ -43,7 +43,7 @@ async def get_books(
     )
 
 @app.get("/books/{book_id}", response_model=BookResponse)
-async def get_book(book_id: Annotated[int, Path(gt=1)]) -> BookResponse:
+async def get_book(book_id: Annotated[int, Path(gt=0)]) -> BookResponse:
     books = load_books()
     for book in books:
         if book["book_id"] == book_id:
@@ -70,15 +70,16 @@ async def create_book(request_book: BookCreate) -> BookResponse:
     return respond
 
 @app.put("/books/{book_id}", response_model=BookResponse)
-async def update_book(book_id: int, request_book: BookCreate) -> BookResponse:
+async def update_book(book_id: Annotated[int, Path(gt=0)], request_book: BookCreate) -> BookResponse:
     books = load_books()
     
     for index, book in enumerate(books):
         if book["book_id"] == book_id:
-            UpdatedBook = BookModel ( # I have a question about this part
+            existing = BookModel(**book)
+            UpdatedBook = BookModel (
                 book_id=book_id,
                 **request_book.model_dump(),
-                creation_date=book["creation_date"],
+                creation_date=existing.creation_date,
             )
             
             books[index] = UpdatedBook.model_dump()
@@ -92,7 +93,7 @@ async def update_book(book_id: int, request_book: BookCreate) -> BookResponse:
 
 
 @app.delete("/books/{book_id}")
-async def delete_book(book_id: int) -> None:
+async def delete_book(book_id: Annotated[int, Path(gt=0)]) -> None:
     books = load_books()
     for index, book in enumerate(books):
         if book["book_id"] == book_id:
@@ -111,7 +112,7 @@ async def get_authors(
         min_birth_year: int | None = None,
         max_birth_year: int | None = None,
         offset: Annotated[int, Query(ge=0)] = 0,
-        limit: Annotated[int, Query(ge=1)] = 10,
+        limit: Annotated[int, Query(ge=1, le=20)] = 10,
     ) -> Page[AuthorResponse]:
     authors = load_authors()
     authors_out = []
@@ -137,7 +138,7 @@ async def get_authors(
     )
 
 @app.get("/authors/{author_id}", response_model=AuthorResponse)
-async def get_author(author_id: Annotated[int, Path(gt=0)]) -> AuthorResponse:
+async def get_author(author_id: Annotated[int, Path(gt=0)]):
     """
     Get a specific author by ID.
     
@@ -150,7 +151,7 @@ async def get_author(author_id: Annotated[int, Path(gt=0)]) -> AuthorResponse:
     raise HTTPException(status_code=404, detail="Author not found")
 
 @app.post("/authors", response_model=AuthorResponse)
-async def create_author(request_author: AuthorCreate) -> AuthorResponse:
+async def create_author(request_author: AuthorCreate):
     authors = load_authors()
 
     created_author = AuthorModel(
@@ -171,15 +172,16 @@ async def create_author(request_author: AuthorCreate) -> AuthorResponse:
 async def update_author(
     author_id: Annotated[int, Path(gt=0)],
     request_author: AuthorCreate
-) -> AuthorResponse:
+    ):
     authors = load_authors()
     
     for index, author in enumerate(authors):
         if author["author_id"] == author_id:
+            existing = AuthorModel(**author)
             updated_author = AuthorModel(
                 author_id=author_id,
                 **request_author.model_dump(),
-                added_at=author["added_at"], 
+                added_at=existing.added_at, 
             )
             
             authors[index] = updated_author.model_dump()
@@ -210,8 +212,8 @@ async def get_loans(
     min_date: str | None = None,
     max_date: str | None = None,
     offset: Annotated[int, Query(ge=0)] = 0,
-    limit: Annotated[int, Query(ge=1)] = 10,
-) -> Page[LoanResponse]:
+    limit: Annotated[int, Query(ge=1, le=20)] = 10,
+    ) -> Page[LoanResponse]:
     loans = load_loans()
     loans_out = []
     
@@ -239,7 +241,7 @@ async def get_loans(
 
 
 @app.get("/loans/{loan_id}", response_model=LoanResponse)
-async def get_loan(loan_id: Annotated[int, Path(gt=0)]) -> LoanResponse:
+async def get_loan(loan_id: Annotated[int, Path(gt=0)]):
     loans = load_loans()
     for loan in loans:
         if loan["loan_id"] == loan_id:
@@ -248,7 +250,7 @@ async def get_loan(loan_id: Annotated[int, Path(gt=0)]) -> LoanResponse:
 
 
 @app.post("/loans", response_model=LoanResponse)
-async def create_loan(request_loan: LoanCreate) -> LoanResponse:
+async def create_loan(request_loan: LoanCreate):
     loans = load_loans()
 
     created_loan = LoanModel(
@@ -268,15 +270,16 @@ async def create_loan(request_loan: LoanCreate) -> LoanResponse:
 async def update_loan(
     loan_id: Annotated[int, Path(gt=0)],
     request_loan: LoanCreate
-) -> LoanResponse:
+    ):
     loans = load_loans()
     
     for index, loan in enumerate(loans):
         if loan["loan_id"] == loan_id:
+            existing = LoanModel(**loan)
             updated_loan = LoanModel(
                 loan_id=loan_id,
                 **request_loan.model_dump(),
-                added_at=loan["added_at"],
+                added_at=existing.added_at,
             )
             
             loans[index] = updated_loan.model_dump()
