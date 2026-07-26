@@ -22,12 +22,13 @@ async def get_books(
     
     books = load_books()
     books_out = []
-    for book in books: 
-        if author and book["author"] != author:
+    for dict_book in books:
+        book = BookResponse(**dict_book) 
+        if author and book.author != author:
             continue
-        if genre and book["genre"] != genre:
+        if genre and book.genre != genre:
             continue
-        if min_publish_year and book["publish_year"] < min_publish_year:
+        if min_publish_year and book.publish_year < min_publish_year:
             continue
         books_out.append(book)
     
@@ -46,13 +47,7 @@ async def get_book(book_id: Annotated[int, Path(gt=1)]) -> BookResponse:
     books = load_books()
     for book in books:
         if book["book_id"] == book_id:
-            return BookResponse(
-                book_id=book["book_id"],
-                title=book["title"],   
-                author=book["author"],
-                genre=book["genre"],
-                publish_year=book["publish_year"],
-            )
+            return BookResponse( **book)
     raise HTTPException(status_code=404, detail="Book not found")
 
 
@@ -97,13 +92,13 @@ async def update_book(book_id: int, request_book: BookCreate) -> BookResponse:
 
 
 @app.delete("/books/{book_id}")
-async def delete_book(book_id: int) -> dict:
+async def delete_book(book_id: int) -> None:
     books = load_books()
     for index, book in enumerate(books):
         if book["book_id"] == book_id:
             del books[index]
             save_books(books)
-            return {"message": "Book deleted successfully"}
+            return
     
     raise HTTPException(status_code=404, detail="Book not found")
 
@@ -121,12 +116,13 @@ async def get_authors(
     authors = load_authors()
     authors_out = []
     
-    for author in authors:
-        if name and author["name"] != name:
+    for dict_author in authors:
+        author = AuthorResponse(**dict_author)
+        if name and author.name != name:
             continue
-        if min_birth_year and author["birth_year"] < min_birth_year:
+        if min_birth_year and author.birth_year < min_birth_year:
             continue
-        if max_birth_year and author["birth_year"] > max_birth_year:
+        if max_birth_year and author.birth_year > max_birth_year:
             continue
         authors_out.append(author)
     
@@ -150,11 +146,7 @@ async def get_author(author_id: Annotated[int, Path(gt=0)]) -> AuthorResponse:
     authors = load_authors()
     for author in authors:
         if author["author_id"] == author_id:
-            return AuthorResponse(
-                author_id=author["author_id"],
-                name=author["name"],
-                birth_year=author["birth_year"],
-            )
+            return AuthorResponse(**author)
     raise HTTPException(status_code=404, detail="Author not found")
 
 @app.post("/authors", response_model=AuthorResponse)
@@ -201,13 +193,13 @@ async def update_author(
 
 
 @app.delete("/authors/{author_id}")
-async def delete_author(author_id: Annotated[int, Path(gt=0)]) -> dict:
+async def delete_author(author_id: Annotated[int, Path(gt=0)]) -> None:
     authors = load_authors()
     for index, author in enumerate(authors):
         if author["author_id"] == author_id:
             del authors[index]
             save_authors(authors)
-            return {"message": "Author deleted successfully"}
+            return
     
     raise HTTPException(status_code=404, detail="Author not found")
 
@@ -223,14 +215,15 @@ async def get_loans(
     loans = load_loans()
     loans_out = []
     
-    for loan in loans:
-        if name and loan["name"] != name:
+    for dict_loan in loans:
+        loan = LoanResponse(**dict_loan)
+        if name and loan.name != name:
             continue
-        if date and loan["date"] != date:
+        if date and loan.date != date:
             continue
-        if min_date and loan["date"] < min_date:
+        if min_date and loan.date < min_date:
             continue
-        if max_date and loan["date"] > max_date:
+        if max_date and loan.date > max_date:
             continue
         loans_out.append(loan)
     
@@ -250,10 +243,7 @@ async def get_loan(loan_id: Annotated[int, Path(gt=0)]) -> LoanResponse:
     loans = load_loans()
     for loan in loans:
         if loan["loan_id"] == loan_id:
-            return LoanResponse(
-                loan_id=loan["loan_id"],
-                date=loan["date"],
-            )
+            return LoanResponse(**loan)
     raise HTTPException(status_code=404, detail="Loan not found")
 
 
@@ -300,12 +290,12 @@ async def update_loan(
 
 
 @app.delete("/loans/{loan_id}")
-async def delete_loan(loan_id: Annotated[int, Path(gt=0)]) -> dict:
+async def delete_loan(loan_id: Annotated[int, Path(gt=0)]) -> None:
     loans = load_loans()
     for index, loan in enumerate(loans):
         if loan["loan_id"] == loan_id:
             del loans[index]
             save_loans(loans)
-            return {"message": "Loan deleted successfully"}
+            return
     
     raise HTTPException(status_code=404, detail="Loan not found")

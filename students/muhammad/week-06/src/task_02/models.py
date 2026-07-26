@@ -51,6 +51,7 @@ class AuthorResponse(BaseModel):
 class LoanModel(BaseModel):
     loan_id: int
     date: str
+    name: str
     added_at: str
     
 class LoanCreate(BaseModel):
@@ -60,3 +61,4 @@ class LoanCreate(BaseModel):
 class LoanResponse(BaseModel):
     loan_id: int
     date: str
+    name: str
