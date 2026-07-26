@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Annotated
 
 from fastapi import FastAPI, HTTPException, Query, Path
-from models import BookCreate, BookModel, BookResponse, AuthorCreate, AuthorModel, AuthorResponse, LoanCreate, LoanModel, LoanResponse
+from models import Page, BookCreate, BookModel, BookResponse, AuthorCreate, AuthorModel, AuthorResponse, LoanCreate, LoanModel, LoanResponse
 from storage import load_books, save_books, load_authors, save_authors, load_loans, save_loans
 
 app = FastAPI()
@@ -15,7 +15,7 @@ async def get_books(
         min_publish_year : int | None = None,
         offset : Annotated[int, Query(ge=0)] = 0,
         limit : Annotated[int, Query(ge=1)] = 10,
-    ) -> list[dict]:
+    ) -> Page[BookResponse]:
     """
         A cool docstring
     """
@@ -30,9 +30,16 @@ async def get_books(
         if min_publish_year and book["publish_year"] < min_publish_year:
             continue
         books_out.append(book)
+    
+    total = len(books_out)
     books_out = books_out[offset:offset + limit]
-    return books_out
-
+    
+    return Page[BookResponse](
+        items=books_out,
+        total=total,
+        offset=offset,
+        limit=limit
+    )
 
 @app.get("/books/{book_id}", response_model=BookResponse)
 async def get_book(book_id: Annotated[int, Path(gt=1)]) -> BookResponse:
@@ -110,7 +117,7 @@ async def get_authors(
         max_birth_year: int | None = None,
         offset: Annotated[int, Query(ge=0)] = 0,
         limit: Annotated[int, Query(ge=1)] = 10,
-    ) -> list[dict]:
+    ) -> Page[AuthorResponse]:
     authors = load_authors()
     authors_out = []
     
@@ -123,8 +130,15 @@ async def get_authors(
             continue
         authors_out.append(author)
     
+    total = len(authors_out)
     authors_out = authors_out[offset:offset + limit]
-    return authors_out
+    
+    return Page[AuthorResponse](
+        items=authors_out,
+        total=total,
+        offset=offset,
+        limit=limit
+    )
 
 @app.get("/authors/{author_id}", response_model=AuthorResponse)
 async def get_author(author_id: Annotated[int, Path(gt=0)]) -> AuthorResponse:
@@ -205,7 +219,7 @@ async def get_loans(
     max_date: str | None = None,
     offset: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1)] = 10,
-) -> list[dict]:
+) -> Page[LoanResponse]:
     loans = load_loans()
     loans_out = []
     
@@ -220,8 +234,15 @@ async def get_loans(
             continue
         loans_out.append(loan)
     
+    total = len(loans_out)
     loans_out = loans_out[offset:offset + limit]
-    return loans_out
+    
+    return Page[LoanResponse](
+        items=loans_out,
+        total=total,
+        offset=offset,
+        limit=limit
+    )
 
 
 @app.get("/loans/{loan_id}", response_model=LoanResponse)
