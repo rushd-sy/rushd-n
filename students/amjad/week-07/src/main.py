@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from routers.authors import router as authors_router
@@ -17,6 +19,24 @@ async def Book_Not_Found(request: Request, exc: BookNotFoundError):
         status_code=404,
         content={"message": f"Book {exc.book_id} not found"}
     )
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    import time
+    start_time = time.perf_counter()
+    response = await call_next(request)
+    duration = (time.perf_counter() - start_time)
+    print(f"{request.method} {request.url.path} {response.status_code} {duration}ms")
+    return response
+
+
+@app.middleware("http")
+async def add_request_id(request: Request, call_next):
+    request_id = str(uuid.uuid4())
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request_id
+    print(f"Request ID: {request_id}")
+    return response
 
 @app.get("/")
 async def root():
