@@ -4,18 +4,34 @@ from typing import Annotated
 from datetime import datetime
 from models import LoanCreate, LoanOut, Loan, Page
 from storage import load_loans, save_loans
+from dependency import CommonsDepForPagination
 
 router = APIRouter()
 
 
 @router.get("/", response_model=Page[LoanOut])
-async def get_loans() -> Page[LoanOut]:
+async def get_loans(
+    commons: CommonsDepForPagination,
+    loan_date: str | None = None,
+) -> Page[LoanOut]:
     """
-    Retrieve all loans.
-    - Returns a list of all loans.
+    Retrieve a list of loans with optional filters.
+    - **loan_date**: Filter loans by the date they were made.
+    - **offset**: The number of items to skip before starting to collect the result set.
+    - **limit**: The maximum number of items to return (default is 10, maximum is 20).
     """
     loans = load_loans()
-    return Page[LoanOut](items=[LoanOut(**loan) for loan in loans], total=len(loans))
+    loans_out = []
+    for loan in loans:
+        if loan_date and loan["loan_date"] != loan_date:
+            continue
+        loans_out.append(LoanOut(**loan))
+    
+    total = len(loans_out)
+    offset = commons["offset"]
+    limit = commons["limit"]
+    loans_out = loans_out[offset:offset + limit]
+    return Page[LoanOut](items=loans_out, total=total, offset=offset, limit=limit)
 
 @router.post("/", response_model=LoanOut)
 async def create_loan(loan: LoanCreate) -> LoanOut:

@@ -1,20 +1,19 @@
-from fastapi import HTTPException, Path, Query, APIRouter
+from fastapi import Depends, HTTPException, Path, Query, APIRouter
 from typing import Annotated
 
 from datetime import datetime
 from models import BookCreate, Book, BookOut, BookOut, Page
 from storage import load_books, save_books
-
+from dependency import CommonsDepForPagination
 router = APIRouter()
 
 
 @router.get("/", response_model=Page[BookOut])
 async def get_books(
+    commons: CommonsDepForPagination,
     author: str | None = None,
     genre: str | None = None,
     min_year: int | None = None,
-    offset: Annotated[int, Query(ge=0)] = 0,
-    limit: Annotated[int, Query(ge=1, le=20)] = 10
 ) -> Page[BookOut]:
     """
     Retrieve a list of books with optional filters.
@@ -36,6 +35,8 @@ async def get_books(
         books_out.append(BookOut(**book))
     
     total = len(books_out)
+    offset = commons["offset"]
+    limit = commons["limit"]
     books_out = books_out[offset:offset + limit]
     return Page[BookOut](items=books_out, total=total, offset=offset, limit=limit)
 

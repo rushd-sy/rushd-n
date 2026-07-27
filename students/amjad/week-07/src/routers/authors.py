@@ -1,9 +1,10 @@
-from fastapi import HTTPException, Path, Query, APIRouter
+from fastapi import Depends, HTTPException, Path, Query, APIRouter
 from typing import Annotated
 
 from datetime import datetime
-from models import Author, AuthorCreate, AuthorOut, BookCreate, Book, BookOut, LoanCreate, LoanOut, Loan, Page
+from models import Author, AuthorCreate, AuthorOut, Page
 from storage import load_authors, load_books, load_loans, save_authors, save_books, save_loans
+from dependency import CommonsDepForPagination
 
 router = APIRouter()
 
@@ -22,13 +23,30 @@ async def create_author(author: AuthorCreate) -> AuthorOut:
     return AuthorOut(**new_author.model_dump())
 
 @router.get("/", response_model=Page[AuthorOut])
-async def get_authors() -> Page[AuthorOut]:
+async def get_authors(
+    commons: CommonsDepForPagination,
+    author: str | None = Query(default=None, description="Filter authors by name"),
+) -> Page[AuthorOut]:
     """
-    Retrieve all authors.
-    - Returns a list of all authors.
+    Retrieve a list of authors with optional filters.
+    - **author**: Filter authors by name.
+    - **genre**: Filter authors by genre.
+    - **min_year**: Filter authors who started publishing after a certain year.
+    - **offset**: The number of items to skip before starting to collect the result set.
+    - **limit**: The maximum number of items to return (default is 10, maximum is 20).
     """
     authors = load_authors()
-    return Page[AuthorOut](items=[AuthorOut(**author) for author in authors], total=len(authors))
+    authors_out = []
+    for a in authors:
+        if author and a["name"] != author:
+            continue
+        authors_out.append(AuthorOut(**a))
+    
+    total = len(authors_out)
+    offset = commons["offset"]
+    limit = commons["limit"]
+    authors_out = authors_out[offset:offset + limit]
+    return Page[AuthorOut](items=authors_out, total=total, offset=offset, limit=limit)
 
 @router.get("/{author_id}", response_model=AuthorOut)
 async def get_author(author_id: Annotated[int, Path(gt=0)]) -> AuthorOut:
