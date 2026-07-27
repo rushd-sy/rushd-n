@@ -1,0 +1,2 @@
+dependecies and middleware and routers are easy to learn and useful to implement 
+service layer in larger project i think it'll be more useful (or if i can compine all the endpoints in one service model)
