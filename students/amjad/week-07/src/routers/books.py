@@ -5,6 +5,8 @@ from datetime import datetime
 from models import BookCreate, Book, BookOut, BookOut, Page
 from storage import load_books, save_books
 from dependency import CommonsDepForPagination, CurrentUserDep
+from exceptions import BookNotFoundError
+
 router = APIRouter()
 
 
@@ -51,7 +53,7 @@ async def get_book(book_id: Annotated[int, Path(gt=0)]) -> BookOut:
     for book in books:
         if book["book_id"] == book_id:
             return BookOut(**book)
-    raise HTTPException(status_code=404, detail="Book not found")
+    raise BookNotFoundError(book_id=book_id)
 
 
 
