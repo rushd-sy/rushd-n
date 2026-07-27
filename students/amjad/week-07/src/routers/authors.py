@@ -4,17 +4,20 @@ from typing import Annotated
 from datetime import datetime
 from models import Author, AuthorCreate, AuthorOut, Page
 from storage import load_authors, load_books, load_loans, save_authors, save_books, save_loans
-from dependency import CommonsDepForPagination
+from dependency import CommonsDepForPagination, CurrentUserDep
 
 router = APIRouter()
 
 @router.post("/", response_model=AuthorOut)
-async def create_author(author: AuthorCreate) -> AuthorOut:
+async def create_author(author: AuthorCreate, user_id: CurrentUserDep) -> AuthorOut:
     """
     Create a new author.
     - **author**: The details of the author to create.
+    - **user_id**: The ID of the user creating the author.
     - Returns the created author details.
     """
+    if user_id is None:
+        raise HTTPException(status_code=403, detail="unauthorized")
     authors = load_authors()
     created_at = datetime.now().isoformat()
     new_author = Author(author_id=max([stored_author["author_id"] for stored_author in authors], default=0) + 1, **author.model_dump(), books=[], created_at=created_at)
@@ -62,13 +65,16 @@ async def get_author(author_id: Annotated[int, Path(gt=0)]) -> AuthorOut:
     raise HTTPException(status_code=404, detail="Author not found")
 
 @router.put("/{author_id}", response_model=AuthorOut)
-async def update_author(author_id: Annotated[int, Path(gt=0)], author: AuthorCreate) -> AuthorOut:
+async def update_author(author_id: Annotated[int, Path(gt=0)], author: AuthorCreate, user_id: CurrentUserDep) -> AuthorOut:
     """
     Update an existing author.
     - **author_id**: The ID of the author to update and must be a positive integer.
     - **author**: The updated details of the author.
+    - **user_id**: The ID of the user updating the author.
     - Returns the updated author details if found, otherwise raises a 404 error.
     """
+    if user_id is None:
+        raise HTTPException(status_code=403, detail="unauthorized")
     authors = load_authors()
     for i, a in enumerate(authors):
         if a["author_id"] == author_id:
@@ -79,12 +85,15 @@ async def update_author(author_id: Annotated[int, Path(gt=0)], author: AuthorCre
     raise HTTPException(status_code=404, detail="Author not found")
 
 @router.delete("/{author_id}", response_model=AuthorOut)
-async def delete_author(author_id: Annotated[int, Path(gt=0)]) -> AuthorOut:
+async def delete_author(author_id: Annotated[int, Path(gt=0)], user_id: CurrentUserDep) -> AuthorOut:
     """
     Delete an author by their ID.
     - **author_id**: The ID of the author to delete and must be a positive integer.
+    - **user_id**: The ID of the user deleting the author.
     - Returns the deleted author details if found, otherwise raises a 404 error.
     """
+    if user_id is None:
+        raise HTTPException(status_code=403, detail="unauthorized")
     authors = load_authors()
     for i, author in enumerate(authors):
         if author["author_id"] == author_id:

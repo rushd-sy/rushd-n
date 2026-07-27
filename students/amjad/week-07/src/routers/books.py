@@ -4,7 +4,7 @@ from typing import Annotated
 from datetime import datetime
 from models import BookCreate, Book, BookOut, BookOut, Page
 from storage import load_books, save_books
-from dependency import CommonsDepForPagination
+from dependency import CommonsDepForPagination, CurrentUserDep
 router = APIRouter()
 
 
@@ -56,12 +56,15 @@ async def get_book(book_id: Annotated[int, Path(gt=0)]) -> BookOut:
 
 
 @router.post("/", response_model=BookOut)
-async def create_book(book: BookCreate) -> BookOut:
+async def create_book(book: BookCreate, user_id: CurrentUserDep) -> BookOut:
     """
     Create a new book.
     - **book**: The details of the book to create.
+    - **user_id**: The ID of the user creating the book.
     - Returns the created book details.
     """
+    if user_id is None:
+        raise HTTPException(status_code=403, detail="unauthorized")
     books = load_books()    
     created_at = datetime.now().isoformat()
     new_book = Book(book_id=max([stored_book["book_id"] for stored_book in books], default=0) + 1, **book.model_dump(), created_at=created_at)
@@ -70,13 +73,16 @@ async def create_book(book: BookCreate) -> BookOut:
     return BookOut(**new_book.model_dump())
 
 @router.put("/{book_id}", response_model=BookOut)
-async def update_book(book_id: Annotated[int, Path(gt=0)], book: BookCreate) -> BookOut:
+async def update_book(book_id: Annotated[int, Path(gt=0)], book: BookCreate, user_id: CurrentUserDep) -> BookOut:
     """
     Update an existing book.
     - **book_id**: The ID of the book to update and must be a positive integer.
     - **book**: The updated details of the book.
+    - **user_id**: The ID of the user updating the book.
     - Returns the updated book details if found, otherwise raises a 404 error.
     """
+    if user_id is None:
+        raise HTTPException(status_code=403, detail="unauthorized")
     books = load_books()
     for i, b in enumerate(books):
         if b["book_id"] == book_id:
@@ -87,12 +93,15 @@ async def update_book(book_id: Annotated[int, Path(gt=0)], book: BookCreate) -> 
     raise HTTPException(status_code=404, detail="Book not found")
 
 @router.delete("/{book_id}", response_model=BookOut)
-async def delete_book(book_id: Annotated[int, Path(gt=0)]) -> BookOut:
+async def delete_book(book_id: Annotated[int, Path(gt=0)], user_id: CurrentUserDep) -> BookOut:
     """
     Delete a book by its ID.
     - **book_id**: The ID of the book to delete and must be a positive integer.
+    - **user_id**: The ID of the user deleting the book.
     - Returns the deleted book details if found, otherwise raises a 404 error.
     """
+    if user_id is None:
+        raise HTTPException(status_code=403, detail="unauthorized")
     books = load_books()
     for i, book in enumerate(books):
         if book["book_id"] == book_id:
