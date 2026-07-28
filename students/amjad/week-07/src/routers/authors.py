@@ -3,7 +3,7 @@ from typing import Annotated
 
 from datetime import datetime
 from models import Author, AuthorCreate, AuthorOut, Page
-from storage import load_authors, load_books, load_loans, save_authors, save_books, save_loans
+from storage import load_authors, save_authors
 from dependency import CommonsDepForPagination, CurrentUserDep
 
 router = APIRouter()
@@ -15,7 +15,7 @@ class AuthorService:
             raise HTTPException(status_code=403, detail="unauthorized")
         authors = load_authors()
         created_at = datetime.now().isoformat()
-        new_author = Author(author_id=max([stored_author["author_id"] for stored_author in authors], default=0) + 1, **author.model_dump(), books=[], created_at=created_at)
+        new_author = Author(author_id=max([stored_author["author_id"] for stored_author in authors], default=0) + 1, **author.model_dump(), created_at=created_at)
         authors.append(new_author.model_dump())
         save_authors(authors)
         return AuthorOut(**new_author.model_dump())
@@ -88,8 +88,6 @@ async def get_authors(
     """
     Retrieve a list of authors with optional filters.
     - **author**: Filter authors by name.
-    - **genre**: Filter authors by genre.
-    - **min_year**: Filter authors who started publishing after a certain year.
     - **offset**: The number of items to skip before starting to collect the result set.
     - **limit**: The maximum number of items to return (default is 10, maximum is 20).
     """

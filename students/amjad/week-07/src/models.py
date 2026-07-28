@@ -54,14 +54,12 @@ class Author(BaseModel):
     author_id: int
     name: str
     birth_year: int
-    books: list[BookOut] = []
     created_at: str
 
 class AuthorOut(BaseModel):
     author_id: int
     name: str
     birth_year: int
-    books: list[BookOut] = []
 
 class AuthorCreate(BaseModel):
     name: str
