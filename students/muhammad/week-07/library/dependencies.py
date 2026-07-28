@@ -10,7 +10,7 @@ async def get_pagination_params(limit: int = 20, offset: int = 0):
         raise HTTPException(status_code=400, detail="offset must be at least 0")
     return {"limit" : limit, "offset" : offset}
 
-async def get_current_user(x_user_id: Annotated[str | None, Header()]):
+async def get_current_user(x_user_id: Annotated[str | None, Header()] = None):
     if not x_user_id:
         raise HTTPException(status_code=401)
     return x_user_id
