@@ -48,3 +48,12 @@ async def create_book(request_book: BookCreate, book_service: Annotated[BookServ
 @router.delete("/{book_id}")
 async def delete_book(book_id: Annotated[int, Path(gt=0)], book_service: Annotated[BookServices, Depends(BookServices)]) -> None:
     book_service.delete_book(book_id)
+
+@router.put("/{book_id}")
+async def update_book(
+        book_id: Annotated[int, Path(gt=0)], 
+        request_book: BookCreate,
+        book_service: Annotated[BookServices, Depends(BookServices)]
+    ) -> BookResponse:
+
+    return book_service.update_book(book_id, request_book)

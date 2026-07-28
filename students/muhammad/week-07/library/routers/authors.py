@@ -99,7 +99,7 @@ async def update_author(
     raise HTTPException(status_code=404, detail="Author not found")
 
 
-@router.delete(" /{author_id}")
+@router.delete("/{author_id}")
 async def delete_author(author_id: Annotated[int, Path(gt=0)]) -> None:
     authors = load_authors()
     for index, author in enumerate(authors):

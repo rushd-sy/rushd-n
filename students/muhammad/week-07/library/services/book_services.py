@@ -90,3 +90,24 @@ class BookServices:
                 return obj_book
         
         raise BookNotFoundError(book_id)
+    
+    def update_book(self, book_id: int, request_book: BookCreate):
+        books = BookServices._load_books()
+    
+        for index, book in enumerate(books):
+            if book["book_id"] == book_id:
+                existing = BookModel(**book)
+                UpdatedBook = BookModel (
+                    book_id=book_id,
+                    **request_book.model_dump(),
+                    creation_date=existing.creation_date,
+                )
+                
+                books[index] = UpdatedBook.model_dump()
+                save_books(books)
+                
+                return BookResponse(
+                    **UpdatedBook.model_dump()
+                )
+        
+        raise BookNotFoundError(book_id)
