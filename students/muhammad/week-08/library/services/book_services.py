@@ -119,7 +119,6 @@ class BookServices:
         return 
     
     async def async_get_book_from_ext_api(self, book_name: str):
-
         async with httpx.AsyncClient() as client:
             result = await client.get(f"https://openlibrary.org/isbn/{book_name}.json")
         del result

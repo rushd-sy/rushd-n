@@ -42,7 +42,7 @@ async def benchmark_async():
     return end - start
 
 
-async def main():
+async def async_vs_sync():
     print("Test started..")
     sync_time = benchmark_sync()
     async_time = await benchmark_async()
@@ -57,6 +57,41 @@ async def main():
         difference = ((async_time - sync_time) / async_time) * 100
         print(f"Sync was {difference:.2f}% faster")
 
+async def async_sleep_with_bug():
+    time.sleep(2)
+    return
+
+async def async_sleep_without_bug():
+    await asyncio.sleep(2)
+    return
+
+async def sleep_test():
+    start = time.perf_counter()
+
+    await asyncio.gather(
+        async_sleep_with_bug(),
+        async_sleep_with_bug(),
+        async_sleep_with_bug(),
+        async_sleep_with_bug(),
+        async_sleep_with_bug(),
+    )
+
+    bug_time = time.perf_counter() - start
+
+    start = time.perf_counter()
+
+    await asyncio.gather(
+        async_sleep_without_bug(),
+        async_sleep_without_bug(),
+        async_sleep_without_bug(),
+        async_sleep_without_bug(),
+        async_sleep_without_bug(),
+    )
+
+    no_bug_time = time.perf_counter() - start
+
+    print(f"With time.sleep(): {bug_time:.2f} seconds")
+    print(f"With asyncio.sleep(): {no_bug_time:.2f} seconds")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(sleep_test())
