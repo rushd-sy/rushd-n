@@ -1,4 +1,7 @@
-from fastapi import Depends, HTTPException, Path, Query, APIRouter
+from asyncio import wait
+import asyncio
+
+from fastapi import Depends, HTTPException, Path, Query, APIRouter, BackgroundTasks
 from typing import Annotated
 
 from datetime import datetime
@@ -8,6 +11,11 @@ from dependency import CommonsDepForPagination, CurrentUserDep
 from exceptions import BookNotFoundError
 
 class BookService:
+    
+    async def send_email_task(self, book: BookOut) -> None:
+        await asyncio.sleep(2) 
+        print(f"Sending email for book: {book.title}")
+
     async def get_by_id(self, book_id: int) -> BookOut:
         books = load_books()
         for book in books:
@@ -39,7 +47,7 @@ class BookService:
         books_out = books_out[offset:offset + limit]
         return Page[BookOut](items=books_out, total=total, offset=offset, limit=limit)
 
-    async def create(self, book: BookCreate, user_id: CurrentUserDep) -> BookOut:
+    async def create(self, book: BookCreate, user_id: CurrentUserDep, background_tasks: BackgroundTasks) -> BookOut:
         if user_id is None:
             raise HTTPException(status_code=403, detail="unauthorized")
         books = load_books()    
@@ -47,6 +55,7 @@ class BookService:
         new_book = Book(book_id=max([stored_book["book_id"] for stored_book in books], default=0) + 1, **book.model_dump(), created_at=created_at)
         books.append(new_book.model_dump())
         save_books(books)
+        background_tasks.add_task(self.send_email_task, BookOut(**new_book.model_dump()))
         return BookOut(**new_book.model_dump())
 
     async def update(self, book_id: int, book: BookCreate, user_id: CurrentUserDep) -> BookOut:
@@ -108,14 +117,15 @@ async def get_book(book_id: Annotated[int, Path(gt=0)], service: BookService = D
 
 # `async def` because they perform I/O operations
 @router.post("/", response_model=BookOut)
-async def create_book(book: BookCreate, user_id: CurrentUserDep, service: BookService = Depends(BookService)) -> BookOut:
+async def create_book(book: BookCreate, user_id: CurrentUserDep, background_tasks: BackgroundTasks, service: BookService = Depends(BookService)) -> BookOut:
     """
     Create a new book.
     - **book**: The details of the book to create.
     - **user_id**: The ID of the user creating the book.
+    - **background_tasks**: The background tasks to run after creating the book.
     - Returns the created book details.
     """
-    return await service.create(book, user_id)
+    return await service.create(book, user_id, background_tasks)
 
 
 # `async def` because they perform I/O operations
