@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from routers.authors import router as authors_router
 from routers.loans import router as loans_router
 from routers.books import router as books_router
+from routers.httpx_async import router as httpx_async_router
 from fastapi.exception_handlers import http_exception_handler
 from exceptions import BookNotFoundError
 
@@ -13,6 +14,7 @@ app = FastAPI()
 app.include_router(authors_router, prefix="/authors", tags=["authors"])
 app.include_router(loans_router, prefix="/loans", tags=["loans"])
 app.include_router(books_router, prefix="/books", tags=["books"])
+app.include_router(httpx_async_router, prefix="/async_test", tags=["async_test"])
 
 @app.exception_handler(BookNotFoundError)
 async def Book_Not_Found(request: Request, exc: BookNotFoundError):

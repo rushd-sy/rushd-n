@@ -73,7 +73,7 @@ class AuthorService:
 
 # `async def` because they perform I/O operations
 @router.post("/", response_model=AuthorOut)
-async def create_author(author: AuthorCreate, user_id: CurrentUserDep, service: AuthorService = AuthorService()) -> AuthorOut:
+async def create_author(author: AuthorCreate, user_id: CurrentUserDep, service: AuthorService = Depends(AuthorService)) -> AuthorOut:
     """
     Create a new author.
     - **author**: The details of the author to create.
@@ -87,7 +87,7 @@ async def create_author(author: AuthorCreate, user_id: CurrentUserDep, service: 
 async def get_authors(
     commons: CommonsDepForPagination,
     author: str | None = Query(default=None, description="Filter authors by name"),
-    service: AuthorService = AuthorService()
+    service: AuthorService = Depends(AuthorService)
 ) -> Page[AuthorOut]:
     """
     Retrieve a list of authors with optional filters.
@@ -99,7 +99,7 @@ async def get_authors(
 
 # `async def` because they perform I/O operations
 @router.get("/{author_id}", response_model=AuthorOut)
-async def get_author(author_id: Annotated[int, Path(gt=0)], service: AuthorService = AuthorService()) -> AuthorOut:
+async def get_author(author_id: Annotated[int, Path(gt=0)], service: AuthorService = Depends(AuthorService)) -> AuthorOut:
     """
     Retrieve an author by their ID.
     - **author_id**: The ID of the author to retrieve and must be a positive integer.
@@ -109,7 +109,7 @@ async def get_author(author_id: Annotated[int, Path(gt=0)], service: AuthorServi
 
 # `async def` because they perform I/O operations
 @router.put("/{author_id}", response_model=AuthorOut)
-async def update_author(author_id: Annotated[int, Path(gt=0)], author: AuthorCreate, user_id: CurrentUserDep, service: AuthorService = AuthorService()) -> AuthorOut:
+async def update_author(author_id: Annotated[int, Path(gt=0)], author: AuthorCreate, user_id: CurrentUserDep, service: AuthorService = Depends(AuthorService)) -> AuthorOut:
     """
     Update an existing author.
     - **author_id**: The ID of the author to update and must be a positive integer.
@@ -121,7 +121,7 @@ async def update_author(author_id: Annotated[int, Path(gt=0)], author: AuthorCre
 
 # `async def` because they perform I/O operations
 @router.delete("/{author_id}", response_model=AuthorOut)
-async def delete_author(author_id: Annotated[int, Path(gt=0)], user_id: CurrentUserDep, service: AuthorService = AuthorService()) -> AuthorOut:
+async def delete_author(author_id: Annotated[int, Path(gt=0)], user_id: CurrentUserDep, service: AuthorService = Depends(AuthorService)) -> AuthorOut:
     """
     Delete an author by their ID.
     - **author_id**: The ID of the author to delete and must be a positive integer.
