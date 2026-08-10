@@ -1,46 +1,50 @@
 import json
+import aiofiles
 
-def save_books(books: list[dict]) -> None:
-    with open("books.json", "w") as file:
-        json.dump(books, file, indent=4)
+async def save_books(books: list[dict]) -> None:
+    async with aiofiles.open("books.json", "w") as file:
+        await file.write(json.dumps(books, indent=4))
 
-def load_books() -> list[dict]:
+async def load_books() -> list[dict]:
     try:
-        with open("books.json", "r") as file:
-            books = json.load(file)
+        async with aiofiles.open("books.json", "r") as file:
+            content = await file.read()
+            books = json.loads(content)
     except FileNotFoundError:
-        save_books([])
+        await save_books([])
         books = []
     return books
 
 
 
 
-def save_authors(authors: list[dict]) -> None:
-    with open("authors.json", "w") as file:
-        json.dump(authors, file, indent=4)
+async def save_authors(authors: list[dict]) -> None:
+    async with aiofiles.open("authors.json", "w") as file:
+        await file.write(json.dumps(authors, indent=4))
 
-def load_authors() -> list[dict]:
+async def load_authors() -> list[dict]:
     try:
-        with open("authors.json", "r") as file:
-            authors = json.load(file)
+        async with aiofiles.open("authors.json", "r") as file:
+            content = await file.read()
+            authors = json.loads(content)
     except FileNotFoundError:
-        save_authors([])
+        await save_authors([])
         authors = []
     return authors
 
 
 
 
-def save_loans(loans: list[dict]) -> None:
-    with open("loans.json", "w") as file:
-        json.dump(loans, file, indent=4)
+async def save_loans(loans: list[dict]) -> None:
+    async with aiofiles.open("loans.json", "w") as file:
+        await file.write(json.dumps(loans, indent=4))
 
-def load_loans() -> list[dict]:
+async def load_loans() -> list[dict]:
     try:
-        with open("loans.json", "r") as file:
-            loans = json.load(file)
+        async with aiofiles.open("loans.json", "r") as file:
+            content = await file.read()
+            loans = json.loads(content)
     except FileNotFoundError:
-        save_loans([])
+        await save_loans([])
         loans = []
     return loans

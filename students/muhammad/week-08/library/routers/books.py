@@ -1,5 +1,3 @@
-from colorama import Back
-
 from fastapi import APIRouter, BackgroundTasks, Path, Depends
 from typing import Annotated
 import asyncio 
@@ -25,7 +23,7 @@ async def get_books(
         A cool docstring
     """
     
-    return book_service.get_books(
+    return await book_service.get_books(
         author=author,
         genre=genre,
         min_publish_year=min_publish_year,
@@ -40,7 +38,7 @@ async def get_book(
         user_id: Annotated[str, Depends(get_current_user)],
         book_service: Annotated[BookServices, Depends(BookServices)]
     ) -> BookResponse:
-    return book_service.get_book_by_id(book_id=book_id)
+    return await book_service.get_book_by_id(book_id=book_id)
 
 
 async def write_notification():
@@ -49,13 +47,13 @@ async def write_notification():
 
 @router.post("/", response_model=BookResponse)
 async def create_book(request_book: BookCreate, book_service: Annotated[BookServices, Depends(BookServices)], background_tasks: BackgroundTasks) -> BookResponse:
-    response = book_service.create_book(request_book)
+    response = await book_service.create_book(request_book)
     background_tasks.add_task(write_notification)
     return response
 
 @router.delete("/{book_id}")
 async def delete_book(book_id: Annotated[int, Path(gt=0)], book_service: Annotated[BookServices, Depends(BookServices)]) -> None:
-    book_service.delete_book(book_id)
+    await book_service.delete_book(book_id)
 
 @router.put("/{book_id}")
 async def update_book(
@@ -64,4 +62,4 @@ async def update_book(
         book_service: Annotated[BookServices, Depends(BookServices)]
     ) -> BookResponse:
 
-    return book_service.update_book(book_id, request_book)
+    return await book_service.update_book(book_id, request_book)

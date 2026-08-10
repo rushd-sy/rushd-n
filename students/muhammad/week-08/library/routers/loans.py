@@ -19,7 +19,7 @@ async def get_loans(
     max_date: str | None = None,
     ) -> Page[LoanResponse]:
     
-    loans = load_loans()
+    loans = await load_loans()
     loans_out = []
     offset = pagination_params['offset']
     limit = pagination_params['limit']
@@ -53,7 +53,7 @@ async def get_loan(
         user_id: Annotated[str, Depends(get_current_user)]
     ):
     
-    loans = load_loans()
+    loans = await load_loans()
     for loan in loans:
         if loan["loan_id"] == loan_id:
             return LoanResponse(**loan)
@@ -62,7 +62,7 @@ async def get_loan(
 
 @router.post("/", response_model=LoanResponse)
 async def create_loan(request_loan: LoanCreate):
-    loans = load_loans()
+    loans = await load_loans()
 
     created_loan = LoanModel(
         loan_id=max([loan["loan_id"] for loan in loans], default=0) + 1,
@@ -70,7 +70,7 @@ async def create_loan(request_loan: LoanCreate):
         added_at=datetime.now().isoformat(),
     )
     loans.append(created_loan.model_dump())
-    save_loans(loans)
+    await save_loans(loans)
 
     return LoanResponse(
         **created_loan.model_dump(),
@@ -82,7 +82,7 @@ async def update_loan(
     loan_id: Annotated[int, Path(gt=0)],
     request_loan: LoanCreate
     ):
-    loans = load_loans()
+    loans = await load_loans()
     
     for index, loan in enumerate(loans):
         if loan["loan_id"] == loan_id:
@@ -94,7 +94,7 @@ async def update_loan(
             )
             
             loans[index] = updated_loan.model_dump()
-            save_loans(loans)
+            await save_loans(loans)
             
             return LoanResponse(
                 **updated_loan.model_dump()
@@ -105,11 +105,11 @@ async def update_loan(
 
 @router.delete("/{loan_id}")
 async def delete_loan(loan_id: Annotated[int, Path(gt=0)]) -> None:
-    loans = load_loans()
+    loans = await load_loans()
     for index, loan in enumerate(loans):
         if loan["loan_id"] == loan_id:
             del loans[index]
-            save_loans(loans)
+            await save_loans(loans)
             return
     
     raise HTTPException(status_code=404, detail=f"loan with id {loan_id} doesn't exist")

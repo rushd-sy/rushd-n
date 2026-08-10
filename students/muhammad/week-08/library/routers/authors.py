@@ -18,7 +18,7 @@ async def get_authors(
         min_birth_year: int | None = None,
         max_birth_year: int | None = None,
     ) -> Page[AuthorResponse]:
-    authors = load_authors()
+    authors = await load_authors()
     authors_out = []
     offset = pagination_params['offset']
     limit = pagination_params['limit']
@@ -49,7 +49,7 @@ async def get_author(
         user_id: Annotated[str, Depends(get_current_user)]
     ):
 
-    authors = load_authors()
+    authors = await load_authors()
     for author in authors:
         if author["author_id"] == author_id:
             return AuthorResponse(**author)
@@ -57,7 +57,7 @@ async def get_author(
 
 @router.post("/", response_model=AuthorResponse)
 async def create_author(request_author: AuthorCreate):
-    authors = load_authors()
+    authors = await load_authors()
 
     created_author = AuthorModel(
         author_id=max([author["author_id"] for author in authors], default=0) + 1,
@@ -65,7 +65,7 @@ async def create_author(request_author: AuthorCreate):
         added_at=datetime.now().isoformat(),
     )
     authors.append(created_author.model_dump())
-    save_authors(authors)
+    await save_authors(authors)
 
     return AuthorResponse(
         **created_author.model_dump(),
@@ -78,7 +78,7 @@ async def update_author(
     author_id: Annotated[int, Path(gt=0)],
     request_author: AuthorCreate
     ):
-    authors = load_authors()
+    authors = await load_authors()
     
     for index, author in enumerate(authors):
         if author["author_id"] == author_id:
@@ -90,7 +90,7 @@ async def update_author(
             )
             
             authors[index] = updated_author.model_dump()
-            save_authors(authors)
+            await save_authors(authors)
             
             return AuthorResponse(
                 **updated_author.model_dump()
@@ -101,11 +101,11 @@ async def update_author(
 
 @router.delete("/{author_id}")
 async def delete_author(author_id: Annotated[int, Path(gt=0)]) -> None:
-    authors = load_authors()
+    authors = await load_authors()
     for index, author in enumerate(authors):
         if author["author_id"] == author_id:
             del authors[index]
-            save_authors(authors)
+            await save_authors(authors)
             return
     
     raise HTTPException(status_code=404, detail=f"author with id {author_id} doesn't exist")
