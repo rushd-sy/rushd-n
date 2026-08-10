@@ -1,53 +1,63 @@
+import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch
 
 from main import app
 
-client = TestClient(app)
+@pytest.fixture
+def client():
+    with TestClient(app) as c:
+        yield c
 
-fake_books = [
-    {
-        "book_id": 1,
-        "title": "First Book",
-        "author" : "Bitar",
-        "genre" : "Horror",
-        "publish_year": 2023,
-        "creation_date": "2025-01-01T00:00:00"
-    }, 
-    {
-        "book_id": 2,
-        "title": "Second Book",
-        "author" : "Bitar",
-        "genre" : "Mystery",
-        "publish_year": 1999,
-        "creation_date": "2025-01-01T00:00:00"
-    }
-]
+@pytest.fixture
+def fake_books():
+    fake_books_json = [
+        {
+            "book_id": 1,
+            "title": "First Book",
+            "author" : "Bitar",
+            "genre" : "Horror",
+            "publish_year": 2023,
+            "creation_date": "2025-01-01T00:00:00"
+        }, 
+        {
+            "book_id": 2,
+            "title": "Second Book",
+            "author" : "Bitar",
+            "genre" : "Mystery",
+            "publish_year": 1999,
+            "creation_date": "2025-01-01T00:00:00"
+        }
+    ]
+    return fake_books_json.copy()
 
-fake_books_response = [
-    {
-        "book_id": 1,
-        "title": "First Book",
-        "author" : "Bitar",
-        "genre" : "Horror",
-        "publish_year": 2023
-    }, 
-    {
-        "book_id": 2,
-        "title": "Second Book",
-        "author" : "Bitar",
-        "genre" : "Mystery",
-        "publish_year": 1999
-    }
-]
+@pytest.fixture
+def fake_books_response():
+    fake_books_response_json = [
+        {
+            "book_id": 1,
+            "title": "First Book",
+            "author" : "Bitar",
+            "genre" : "Horror",
+            "publish_year": 2023
+        }, 
+        {
+            "book_id": 2,
+            "title": "Second Book",
+            "author" : "Bitar",
+            "genre" : "Mystery",
+            "publish_year": 1999
+        }
+    ]
+    return fake_books_response_json.copy()
 
-def test_get_books():
+def test_get_books(client, fake_books, fake_books_response):
     with patch("services.book_services.load_books", return_value=fake_books):
         response = client.get("/books")
         assert response.status_code == 200
         assert response.json()['items'] == fake_books_response
 
-def test_get_books_does_not_return_creation_date():
+def test_get_books_does_not_return_creation_date(client, fake_books, fake_books_response):
     with patch("services.book_services.load_books", return_value=fake_books):
         response = client.get("/books")
         assert response.status_code == 200
@@ -55,19 +65,19 @@ def test_get_books_does_not_return_creation_date():
             assert "creation_date" not in book
         assert response.json()['items'] == fake_books_response
 
-def test_get_book_by_id():
+def test_get_book_by_id(client, fake_books, fake_books_response):
     with patch("services.book_services.load_books", return_value=fake_books):
         response = client.get("/books/1", headers={"x-user-id" : "1"})
         assert response.status_code == 200
         assert response.json() == fake_books_response[0]
 
-def test_get_book_by_id_not_found():
+def test_get_book_by_id_not_found(client, fake_books):
     with patch("services.book_services.load_books", return_value=fake_books):
         response = client.get("/books/3", headers={"x-user-id" : "1"})
         assert response.status_code == 404
         assert response.json()['details'] == "Book with id 3 doesn't exist"
 
-def test_create_book():
+def test_create_book(client, fake_books):
     new_book = {
         "title": "Third Book",
         "author" : "Bitar",
@@ -84,7 +94,7 @@ def test_create_book():
         assert response.json()['book_id'] == 3
         assert response.json()['title'] == new_book['title']
 
-def test_create_book_fails_with_invalid_data():
+def test_create_book_fails_with_invalid_data(client):
     invalid_book = {
         "title": "Invalid Book",
         "author" : "Bitar",
@@ -94,7 +104,7 @@ def test_create_book_fails_with_invalid_data():
     assert response.status_code == 422
 
 
-def test_delete_book():
+def test_delete_book(client, fake_books):
     with patch(
         "services.book_services.load_books",
         return_value=fake_books.copy()
@@ -108,7 +118,7 @@ def test_delete_book():
         saved_books = mock_save_books.call_args[0][0]
         assert all(book["book_id"] != 1 for book in saved_books)
         
-def test_delete_book_not_found():
+def test_delete_book_not_found(client, fake_books):
     with patch(
         "services.book_services.load_books",
         return_value=fake_books.copy()
@@ -121,7 +131,7 @@ def test_delete_book_not_found():
         mock_save_books.assert_not_called()
         assert response.json()['details'] == "Book with id 4 doesn't exist"
 
-def test_update_book():
+def test_update_book(client, fake_books):
     updated_book = {
         "title": "Updated Book",
         "author" : "Bitar",
