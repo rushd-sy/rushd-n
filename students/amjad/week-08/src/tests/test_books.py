@@ -42,5 +42,11 @@ def test_create_book_invalid_input(client, invalid_input):
 
 
 def test_update_book_not_found(client):
-    response = client.put("/books/999", json={"title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "genre": "Fiction", "year": 1925})
+    response = client.put("/books/999", json={"title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "genre": "Fiction", "year": 1925}, headers={"X-User-Id": "1"})
+    assert response.status_code == 404
+    assert response.json() == {"message": "Book 999 not found"}
+
+def test_unauthorized_access(client):
+    response = client.post("/books", json={"title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "genre": "Fiction", "year": 1925})
     assert response.status_code == 403
+    assert response.json() == {"detail": "unauthorized"}

@@ -40,5 +40,11 @@ def test_create_author_invalid_input(client, invalid_input):
 
 
 def test_update_author_not_found(client):
-    response = client.put("/authors/999", json={"name": "Jane Doe", "birth_year": 1990})
+    response = client.put("/authors/999", json={"name": "Jane Doe", "birth_year": 1990}, headers={"X-User-Id": "1"})
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Author not found"}
+
+def test_unauthorized_access(client):
+    response = client.post("/authors", json={"name": "John Doe", "birth_year": 1990})
     assert response.status_code == 403
+    assert response.json() == {"detail": "unauthorized"}
