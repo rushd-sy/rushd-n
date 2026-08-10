@@ -53,7 +53,7 @@ async def get_author(
     for author in authors:
         if author["author_id"] == author_id:
             return AuthorResponse(**author)
-    raise HTTPException(status_code=404, detail="Author not found")
+    raise HTTPException(status_code=404, detail=f"author with id {author_id} doesn't exist")
 
 @router.post("/", response_model=AuthorResponse)
 async def create_author(request_author: AuthorCreate):
@@ -96,7 +96,7 @@ async def update_author(
                 **updated_author.model_dump()
             )
     
-    raise HTTPException(status_code=404, detail="Author not found")
+    raise HTTPException(status_code=404, detail=f"author with id {author_id} doesn't exist")
 
 
 @router.delete("/{author_id}")
@@ -108,4 +108,4 @@ async def delete_author(author_id: Annotated[int, Path(gt=0)]) -> None:
             save_authors(authors)
             return
     
-    raise HTTPException(status_code=404, detail="Author not found")
+    raise HTTPException(status_code=404, detail=f"author with id {author_id} doesn't exist")

@@ -22,7 +22,9 @@ app.include_router(loans_router)
 async def book_not_found_error_handler(request: Request, exc: BookNotFoundError):
     return JSONResponse(
         status_code=404,
-        content=f"Book with id {exc.book_id} doesn't exist"
+        content={
+            "details" : f"Book with id {exc.book_id} doesn't exist"
+        }
     )
 
 

@@ -57,7 +57,7 @@ async def get_loan(
     for loan in loans:
         if loan["loan_id"] == loan_id:
             return LoanResponse(**loan)
-    raise HTTPException(status_code=404, detail="Loan not found")
+    raise HTTPException(status_code=404, detail=f"loan with id {loan_id} doesn't exist")
 
 
 @router.post("/", response_model=LoanResponse)
@@ -112,4 +112,4 @@ async def delete_loan(loan_id: Annotated[int, Path(gt=0)]) -> None:
             save_loans(loans)
             return
     
-    raise HTTPException(status_code=404, detail="Loan not found")
+    raise HTTPException(status_code=404, detail=f"loan with id {loan_id} doesn't exist")
