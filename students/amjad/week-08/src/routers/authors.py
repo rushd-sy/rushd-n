@@ -15,11 +15,11 @@ class AuthorService:
     async def create_author(self, author: AuthorCreate, user_id: CurrentUserDep) -> AuthorOut:
         if user_id is None:
             raise HTTPException(status_code=403, detail="unauthorized")
-        authors = load_authors()
+        authors = await load_authors()
         created_at = datetime.now().isoformat()
         new_author = Author(author_id=max([stored_author["author_id"] for stored_author in authors], default=0) + 1, **author.model_dump(), created_at=created_at)
         authors.append(new_author.model_dump())
-        save_authors(authors)
+        await save_authors(authors)
         return AuthorOut(**new_author.model_dump())
 
     async def get_authors(
@@ -27,7 +27,7 @@ class AuthorService:
         commons: CommonsDepForPagination,
         author: str | None = Query(default=None, description="Filter authors by name"),
     ) -> Page[AuthorOut]:
-        authors = load_authors()
+        authors = await load_authors()
         authors_out = []
         for a in authors:
             if author and a["name"] != author:
@@ -41,7 +41,7 @@ class AuthorService:
         return Page[AuthorOut](items=authors_out, total=total, offset=offset, limit=limit)
 
     async def get_author(self, author_id: Annotated[int, Path(gt=0)]) -> AuthorOut:
-        authors = load_authors()
+        authors = await load_authors()
         for author in authors:
             if author["author_id"] == author_id:
                 return AuthorOut(**author)
@@ -50,24 +50,24 @@ class AuthorService:
     async def update_author(self, author_id: Annotated[int, Path(gt=0)], author: AuthorCreate, user_id: CurrentUserDep) -> AuthorOut:
         if user_id is None:
             raise HTTPException(status_code=403, detail="unauthorized")
-        authors = load_authors()
+        authors = await load_authors()
         for i, a in enumerate(authors):
             if a["author_id"] == author_id:
                 updated_author = Author(author_id=author_id, **author.model_dump(), created_at=a["created_at"])
                 authors[i] = updated_author.model_dump()
-                save_authors(authors)
+                await save_authors(authors)
                 return AuthorOut(**authors[i])
         raise HTTPException(status_code=404, detail="Author not found")
 
     async def delete_author(self, author_id: Annotated[int, Path(gt=0)], user_id: CurrentUserDep) -> AuthorOut:
         if user_id is None:
             raise HTTPException(status_code=403, detail="unauthorized")
-        authors = load_authors()
+        authors = await load_authors()
         for i, author in enumerate(authors):
             if author["author_id"] == author_id:
                 deleted_author = AuthorOut(**authors[i])
                 authors.pop(i)
-                save_authors(authors)
+                await save_authors(authors)
                 return deleted_author
         raise HTTPException(status_code=404, detail="Author not found")
 

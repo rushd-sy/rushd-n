@@ -1,52 +1,53 @@
 import json
+import aiofiles
 
-def load_books() -> list[dict]:
+async def load_books() -> list[dict]:
     try:
-        with open("books.json", "r", encoding="utf-8") as f:
-            books = json.load(f)
+        async with aiofiles.open("books.json", "r", encoding="utf-8") as f:
+            books = json.loads(await f.read())
     except FileNotFoundError:
         books = []
 
-        with open("books.json", "w", encoding="utf-8") as f:
-            json.dump(books, f)
+        async with aiofiles.open("books.json", "w", encoding="utf-8") as f:
+            await f.write(json.dumps(books, indent=4))
 
     return books
-    
-def save_books(books: list[dict]) -> None:
-    with open("books.json", "w", encoding="utf-8") as f:
-        json.dump(books, f, indent=4)
+
+async def save_books(books: list[dict]) -> None:
+    async with aiofiles.open("books.json", "w", encoding="utf-8") as f:
+        await f.write(json.dumps(books, indent=4))
 
 
-def load_loans() -> list[dict]:
+async def load_loans() -> list[dict]:
     try:
-        with open("loans.json", "r", encoding="utf-8") as f:
-            loans = json.load(f)
+        async with aiofiles.open("loans.json", "r", encoding="utf-8") as f:
+            loans = json.loads(await f.read())
     except FileNotFoundError:
         loans = []
 
-        with open("loans.json", "w", encoding="utf-8") as f:
-            json.dump(loans, f)
+        async with aiofiles.open("loans.json", "w", encoding="utf-8") as f:
+            await f.write(json.dumps(loans, indent=4))
 
     return loans
 
-def save_loans(loans: list[dict]) -> None:
-    with open("loans.json", "w", encoding="utf-8") as f:
-        json.dump(loans, f, indent=4)
+async def save_loans(loans: list[dict]) -> None:
+    async with aiofiles.open("loans.json", "w", encoding="utf-8") as f:
+        await f.write(json.dumps(loans, indent=4))
 
 
-def load_authors() -> list[dict]:
+async def load_authors() -> list[dict]:
     try:
-        with open("authors.json", "r", encoding="utf-8") as f:
-            authors = json.load(f)
+        async with aiofiles.open("authors.json", "r", encoding="utf-8") as f:
+            authors = json.loads(await f.read())
     except FileNotFoundError:
         authors = []
 
-        with open("authors.json", "w", encoding="utf-8") as f:
-            json.dump(authors, f)
+        async with aiofiles.open("authors.json", "w", encoding="utf-8") as f:
+            await f.write(json.dumps(authors, indent=4))
 
     return authors
-    
-def save_authors(authors: list[dict]) -> None:
-    with open("authors.json", "w", encoding="utf-8") as f:
-        json.dump(authors, f, indent=4)
+
+async def save_authors(authors: list[dict]) -> None:
+    async with aiofiles.open("authors.json", "w", encoding="utf-8") as f:
+        await f.write(json.dumps(authors, indent=4))
 
