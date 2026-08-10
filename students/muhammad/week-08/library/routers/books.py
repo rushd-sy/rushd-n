@@ -1,5 +1,8 @@
-from fastapi import APIRouter, Path, Depends
+from colorama import Back
+
+from fastapi import APIRouter, BackgroundTasks, Path, Depends
 from typing import Annotated
+import asyncio 
 
 from models.page import Page
 from models.books import BookResponse, BookCreate
@@ -31,7 +34,6 @@ async def get_books(
     )
 
 
-
 @router.get("/{book_id}", response_model=BookResponse)
 async def get_book(
         book_id: Annotated[int, Path(gt=0)],
@@ -40,10 +42,16 @@ async def get_book(
     ) -> BookResponse:
     return book_service.get_book_by_id(book_id=book_id)
 
-@router.post("/", response_model=BookResponse)
-async def create_book(request_book: BookCreate, book_service: Annotated[BookServices, Depends(BookServices)]) -> BookResponse:
-    return book_service.create_book(request_book)
 
+async def write_notification():
+    await asyncio.sleep(2)
+    print("Email sent successfully.")
+
+@router.post("/", response_model=BookResponse)
+async def create_book(request_book: BookCreate, book_service: Annotated[BookServices, Depends(BookServices)], background_tasks: BackgroundTasks) -> BookResponse:
+    response = book_service.create_book(request_book)
+    background_tasks.add_task(write_notification)
+    return response
 
 @router.delete("/{book_id}")
 async def delete_book(book_id: Annotated[int, Path(gt=0)], book_service: Annotated[BookServices, Depends(BookServices)]) -> None:
