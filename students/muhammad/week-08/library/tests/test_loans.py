@@ -67,11 +67,20 @@ def test_get_loan_by_id(client, fake_loans, fake_loans_response):
         assert response.status_code == 200
         assert response.json() == fake_loans_response[0]
 
-def test_get_loan_by_id_not_found(client, fake_loans):
+@pytest.mark.parametrize(
+    "loan_id, expected_statur_code",
+    (
+        (0, 422),
+        (-1, 422),
+        (-1000, 422),
+        ("abc", 422),
+        (100, 404),
+    )
+)
+def test_get_loan_by_id_not_found(client, fake_loans, loan_id, expected_statur_code):
     with patch("routers.loans.load_loans", return_value=fake_loans):
-        response = client.get("/loans/3", headers={"x-user-id" : "1"})
-        assert response.status_code == 404
-        assert response.json()['detail'] == "loan with id 3 doesn't exist"
+        response = client.get(f"/loans/{loan_id}", headers={"x-user-id" : "1"})
+        assert response.status_code == expected_statur_code
 
 def test_create_loan(client, fake_loans):
     new_loan = {

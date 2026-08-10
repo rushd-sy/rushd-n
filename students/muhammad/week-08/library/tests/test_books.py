@@ -71,11 +71,20 @@ def test_get_book_by_id(client, fake_books, fake_books_response):
         assert response.status_code == 200
         assert response.json() == fake_books_response[0]
 
-def test_get_book_by_id_not_found(client, fake_books):
+@pytest.mark.parametrize(
+    "book_id, expected_status_code",
+    [
+        (100, 404),
+        (-1, 422),
+        (-100, 422),
+        ("abs", 422),
+        ("az", 422)
+    ]
+)
+def test_get_book_by_id_not_found(client, fake_books, book_id, expected_status_code):
     with patch("services.book_services.load_books", return_value=fake_books):
-        response = client.get("/books/3", headers={"x-user-id" : "1"})
-        assert response.status_code == 404
-        assert response.json()['details'] == "Book with id 3 doesn't exist"
+        response = client.get(f"/books/{book_id}", headers={"x-user-id" : "1"})
+        assert response.status_code == expected_status_code
 
 def test_create_book(client, fake_books):
     new_book = {

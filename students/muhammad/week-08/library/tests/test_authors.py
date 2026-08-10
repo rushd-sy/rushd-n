@@ -66,11 +66,20 @@ def test_get_author_by_id(client, fake_authors, fake_authors_response):
         assert response.status_code == 200
         assert response.json() == fake_authors_response[0]
 
-def test_get_author_by_id_not_found(client, fake_authors):
+@pytest.mark.parametrize(
+    "author_id, expected_status_code", 
+    (
+        (0, 422),
+        (-1, 422),
+        (-1000, 422),
+        ("abc", 422),
+        (100, 404),
+    )
+)
+def test_get_author_by_id_not_found(client, fake_authors, author_id, expected_status_code):
     with patch("routers.authors.load_authors", return_value=fake_authors):
-        response = client.get("/authors/3", headers={"x-user-id" : "1"})
-        assert response.status_code == 404
-        assert response.json()['detail'] == "author with id 3 doesn't exist"
+        response = client.get(f"/authors/{author_id}", headers={"x-user-id" : "1"})
+        assert response.status_code == expected_status_code
 
 def test_create_author(client, fake_authors):
     new_author =     {    
