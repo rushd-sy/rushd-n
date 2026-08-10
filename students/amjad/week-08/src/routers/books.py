@@ -8,12 +8,13 @@ from models import BookCreate, Book, BookOut, Page
 from storage import load_books, save_books
 from dependency import CommonsDepForPagination, CurrentUserDep
 from exceptions import BookNotFoundError
+import logging
 
 class BookService:
     
     async def send_email_task(self, book: BookOut) -> None:
         await asyncio.sleep(2) 
-        print(f"Sending email for book: {book.title}")
+        logging.info(f"Sending email for book: {book.title}")
 
     async def get_by_id(self, book_id: int) -> BookOut:
         books = load_books()
