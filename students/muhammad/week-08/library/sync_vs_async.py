@@ -1,7 +1,17 @@
 import asyncio
 import time
+import httpx
 
-from services.book_services import BookServices
+def sync_get_book_from_ext_api(book_name: str) :
+    result = httpx.get(f"https://openlibrary.org/isbn/{book_name}.json") 
+    del result
+    return 
+
+async def async_get_book_from_ext_api(book_name: str):
+    async with httpx.AsyncClient() as client:
+        result = await client.get(f"https://openlibrary.org/isbn/{book_name}.json")
+        del result
+        return 
 
 
 isbns = [
@@ -18,11 +28,10 @@ isbns = [
     ]
 
 def benchmark_sync():
-    service = BookServices()
     start = time.perf_counter()
 
     for isbn in isbns:
-        service.sync_get_book_from_ext_api(isbn)
+        sync_get_book_from_ext_api(isbn)
 
     end = time.perf_counter()
 
@@ -30,11 +39,10 @@ def benchmark_sync():
 
 
 async def benchmark_async():
-    service = BookServices()
 
     start = time.perf_counter()
     await asyncio.gather(
-        *(service.async_get_book_from_ext_api(isbn) for isbn in isbns)
+        *(async_get_book_from_ext_api(isbn) for isbn in isbns)
     )
 
     end = time.perf_counter()
@@ -94,4 +102,4 @@ async def sleep_test():
     print(f"With asyncio.sleep(): {no_bug_time:.2f} seconds")
 
 if __name__ == "__main__":
-    asyncio.run(sleep_test())
+    asyncio.run(async_vs_sync())

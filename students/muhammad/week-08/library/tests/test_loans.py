@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch
+from datetime import date
 
 from main import app
 
@@ -15,16 +16,16 @@ def fake_loans():
     {
         "loan_id": 1,
         "book_id": 2,
-        "date": "2025-01-04T00:00:00",
+        "loan_date": date.today().isoformat(),
         "name" : "Amjad",
-        "added_at": "2025-01-03T00:00:00"
+        "added_at": date.today().isoformat()
     }, 
     {
         "loan_id": 2,
         "book_id": 1,
-        "date": "2025-01-03T00:00:00",
+        "loan_date": date.today().isoformat(),
         "name" : "Muhammad",
-        "added_at": "2025-01-01T00:00:00"
+        "added_at": date.today().isoformat()
     }
 ]
     return fake_loans_json.copy()
@@ -35,13 +36,13 @@ def fake_loans_response():
     {
         "loan_id": 1,
         "book_id": 2,
-        "date": "2025-01-04T00:00:00",
+        "loan_date": date.today().isoformat(),
         "name" : "Amjad",
     }, 
     {
         "loan_id": 2,
         "book_id": 1,
-        "date": "2025-01-03T00:00:00",
+        "loan_date": date.today().isoformat(),
         "name" : "Muhammad",
     }
     ]    
@@ -51,6 +52,7 @@ def test_get_loans(client, fake_loans, fake_loans_response):
     with patch("routers.loans.load_loans", return_value=fake_loans):
         response = client.get("/loans")
         assert response.status_code == 200
+        print(response.json()['items'])
         assert response.json()['items'] == fake_loans_response
 
 def test_get_loans_does_not_return_creation_date(client, fake_loans, fake_loans_response):
@@ -85,9 +87,8 @@ def test_get_loan_by_id_not_found(client, fake_loans, loan_id, expected_statur_c
 def test_create_loan(client, fake_loans):
     new_loan = {
         "book_id": 2,
-        "date": "2025-01-04T00:00:00",
+        "loan_date": date.today().isoformat(),
         "name" : "Bitar",
-        "added_at": "2025-01-07T00:00:00"
     }
     
     with patch(
@@ -140,7 +141,7 @@ def test_delete_loan_not_found(client, fake_loans):
 def test_update_loan(client, fake_loans):
     updated_loan =     {
         "book_id": 5,
-        "date": "2025-01-010T00:00:00",
+        "loan_date": date.today().isoformat(),
         "name" : "Amjad",
     }
     with patch(

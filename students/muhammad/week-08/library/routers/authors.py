@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Path, HTTPException, Depends
 from typing import Annotated
 from models.authors import AuthorModel, AuthorResponse, AuthorCreate
-from datetime import datetime
+from datetime import date
 
 from models.page import Page
 from utils.storage import load_authors, save_authors
@@ -62,7 +62,7 @@ async def create_author(request_author: AuthorCreate):
     created_author = AuthorModel(
         author_id=max([author["author_id"] for author in authors], default=0) + 1,
         **request_author.model_dump(),
-        added_at=datetime.now().isoformat(),
+        added_at=date.today(),
     )
     authors.append(created_author.model_dump())
     await save_authors(authors)

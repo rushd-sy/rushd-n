@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch
+from datetime import date
 
 from main import app
 
@@ -17,13 +18,13 @@ def fake_authors():
             "author_id": 1,
             "name": "Bitar",
             "birth_year": 2005,
-            "added_at": "2018",
+            "added_at": date.today(),
         }, 
         {
             "author_id": 2,
             "name": "Bakro",
             "birth_year": 2005,
-            "added_at": "2017",    
+            "added_at": date.today(),    
         }
     ]
     return fake_authors_json.copy()

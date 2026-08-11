@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Path, HTTPException, Depends
 from typing import Annotated
 from models.loans import LoanModel, LoanResponse, LoanCreate
-from datetime import datetime
+from datetime import date
 
 from utils.storage import load_loans, save_loans
 from models.page import Page
@@ -14,9 +14,9 @@ router = APIRouter(prefix="/loans")
 async def get_loans(
     pagination_params: Annotated[dict, Depends(get_pagination_params)],
     name: str | None = None,
-    date: str | None = None,
-    min_date: str | None = None,
-    max_date: str | None = None,
+    loan_date: str | None = None,
+    min_date: date | None = None,
+    max_date: date | None = None,
     ) -> Page[LoanResponse]:
     
     loans = await load_loans()
@@ -28,11 +28,11 @@ async def get_loans(
         loan = LoanResponse(**dict_loan)
         if name and loan.name != name:
             continue
-        if date and loan.date != date:
+        if loan_date and loan.loan_date != date:
             continue
-        if min_date and loan.date < min_date:
+        if min_date and loan.loan_date < min_date:
             continue
-        if max_date and loan.date > max_date:
+        if max_date and loan.loan_date > max_date:
             continue
         loans_out.append(loan)
     
@@ -67,7 +67,7 @@ async def create_loan(request_loan: LoanCreate):
     created_loan = LoanModel(
         loan_id=max([loan["loan_id"] for loan in loans], default=0) + 1,
         **request_loan.model_dump(),
-        added_at=datetime.now().isoformat(),
+        added_at=date.today(),
     )
     loans.append(created_loan.model_dump())
     await save_loans(loans)

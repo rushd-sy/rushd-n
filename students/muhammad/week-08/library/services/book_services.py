@@ -1,5 +1,4 @@
-from datetime import datetime
-import httpx
+from datetime import date
 
 from models.books import BookCreate, BookModel, BookResponse
 from models.page import Page
@@ -72,7 +71,7 @@ class BookServices:
         created_book = BookModel(
         book_id=max([book["book_id"] for book in books], default=0) + 1,
             **request_book.model_dump(),
-            creation_date=datetime.now().isoformat(),
+            creation_date=date(2000, 10, 20),
         )
         books.append(created_book.model_dump())
         await BookServices._save_books(books)
@@ -112,14 +111,3 @@ class BookServices:
                 )
         
         raise BookNotFoundError(book_id)
-
-    def sync_get_book_from_ext_api(self, book_name: str) :
-        result = httpx.get(f"https://openlibrary.org/isbn/{book_name}.json") 
-        del result
-        return 
-    
-    async def async_get_book_from_ext_api(self, book_name: str):
-        async with httpx.AsyncClient() as client:
-            result = await client.get(f"https://openlibrary.org/isbn/{book_name}.json")
-        del result
-        return 

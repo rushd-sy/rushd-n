@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch
+from datetime import date
 
 from main import app
 
@@ -18,7 +19,7 @@ def fake_books():
             "author" : "Bitar",
             "genre" : "Horror",
             "publish_year": 2023,
-            "creation_date": "2025-01-01T00:00:00"
+            "creation_date": date(2020, 8, 30) 
         }, 
         {
             "book_id": 2,
@@ -26,7 +27,7 @@ def fake_books():
             "author" : "Bitar",
             "genre" : "Mystery",
             "publish_year": 1999,
-            "creation_date": "2025-01-01T00:00:00"
+            "creation_date": date(2020, 8, 30) 
         }
     ]
     return fake_books_json.copy()
@@ -99,6 +100,7 @@ def test_create_book(client, fake_books):
         "services.book_services.save_books"):
 
         response = client.post("/books", json=new_book)
+        assert 1 == 1
         assert response.status_code == 200
         assert response.json()['book_id'] == 3
         assert response.json()['title'] == new_book['title']

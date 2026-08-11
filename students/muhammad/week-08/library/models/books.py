@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from datetime import date
 
 class BookModel(BaseModel):
     book_id: int
@@ -6,7 +7,7 @@ class BookModel(BaseModel):
     author: str
     genre: str
     publish_year: int
-    creation_date: str
+    creation_date: date
 
 class BookCreate(BaseModel):
     title: str
