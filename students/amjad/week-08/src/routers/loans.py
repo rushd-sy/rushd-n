@@ -1,5 +1,6 @@
 from fastapi import Depends, Path, APIRouter
 from typing import Annotated
+from datetime import datetime
 
 from models import LoanCreate, LoanOut, Page
 from dependency import CommonsDepForPagination, CurrentUserDep
@@ -14,7 +15,7 @@ router = APIRouter()
 async def get_loans(
     commons: CommonsDepForPagination,
     service: LoanService = Depends(LoanService),
-    loan_date: str | None = None,
+    loan_date: datetime | None = None,
 ) -> Page[LoanOut]:
     """
     Retrieve a list of loans with optional filters.

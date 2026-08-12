@@ -14,10 +14,15 @@ class AuthorService:
         if user_id is None:
             raise HTTPException(status_code=403, detail="unauthorized")
         authors = await load_authors()
+        authors = [Author(**a) for a in authors]
         created_at = datetime.now().isoformat()
-        new_author = Author(author_id=max([stored_author["author_id"] for stored_author in authors], default=0) + 1, **author.model_dump(), created_at=created_at)
-        authors.append(new_author.model_dump())
-        await save_authors(authors)
+        new_author = Author(
+            author_id=max([stored_author.author_id for stored_author in authors], default=0) + 1, 
+            name=author.name,
+            birth_year=author.birth_year,
+            created_at=created_at)
+        authors.append(new_author)
+        await save_authors(authors=[author.model_dump() for author in authors])
         return AuthorOut(**new_author.model_dump())
 
     async def get_authors(
@@ -26,45 +31,53 @@ class AuthorService:
         author: str | None = Query(default=None, description="Filter authors by name"),
     ) -> Page[AuthorOut]:
         authors = await load_authors()
+        authors = [Author(**a) for a in authors]
         authors_out = []
         for a in authors:
-            if author and a["name"] != author:
+            if author and a.name != author:
                 continue
-            authors_out.append(AuthorOut(**a))
+            authors_out.append(AuthorOut(**a.model_dump()))
 
         total = len(authors_out)
-        offset = commons["offset"]
-        limit = commons["limit"]
+        offset = commons.offset
+        limit = commons.limit
         authors_out = authors_out[offset:offset + limit]
         return Page[AuthorOut](items=authors_out, total=total, offset=offset, limit=limit)
 
     async def get_author(self, author_id: Annotated[int, Path(gt=0)]) -> AuthorOut:
         authors = await load_authors()
+        authors = [Author(**a) for a in authors]
         for author in authors:
-            if author["author_id"] == author_id:
-                return AuthorOut(**author)
+            if author.author_id == author_id:
+                return AuthorOut(**author.model_dump())
         raise HTTPException(status_code=404, detail="Author not found")
 
     async def update_author(self, author_id: Annotated[int, Path(gt=0)], author: AuthorCreate, user_id: CurrentUserDep) -> AuthorOut:
         if user_id is None:
             raise HTTPException(status_code=403, detail="unauthorized")
         authors = await load_authors()
+        authors = [Author(**a) for a in authors]
         for i, a in enumerate(authors):
-            if a["author_id"] == author_id:
-                updated_author = Author(author_id=author_id, **author.model_dump(), created_at=a["created_at"])
-                authors[i] = updated_author.model_dump()
-                await save_authors(authors)
-                return AuthorOut(**authors[i])
+            if a.author_id == author_id:
+                updated_author = Author(
+                    author_id=author_id, 
+                    name=author.name,
+                    birth_year=author.birth_year,
+                    created_at=a.created_at)
+                authors[i] = updated_author
+                await save_authors(authors=[author.model_dump() for author in authors])
+                return AuthorOut(**authors[i].model_dump())
         raise HTTPException(status_code=404, detail="Author not found")
 
     async def delete_author(self, author_id: Annotated[int, Path(gt=0)], user_id: CurrentUserDep) -> AuthorOut:
         if user_id is None:
             raise HTTPException(status_code=403, detail="unauthorized")
         authors = await load_authors()
+        authors = [Author(**a) for a in authors]
         for i, author in enumerate(authors):
-            if author["author_id"] == author_id:
-                deleted_author = AuthorOut(**authors[i])
+            if author.author_id == author_id:
+                deleted_author = AuthorOut(**authors[i].model_dump())
                 authors.pop(i)
-                await save_authors(authors)
+                await save_authors(authors=[author.model_dump() for author in authors])
                 return deleted_author
         raise HTTPException(status_code=404, detail="Author not found")

@@ -17,9 +17,10 @@ class BookService:
 
     async def get_by_id(self, book_id: int) -> BookOut:
         books = await load_books()
+        books = [Book(**book) for book in books]
         for book in books:
-            if book["book_id"] == book_id:
-                return BookOut(**book)
+            if book.book_id == book_id:
+                return BookOut(**book.model_dump())
         raise BookNotFoundError(book_id=book_id)
 
     async def list(
@@ -30,30 +31,39 @@ class BookService:
         min_year: int | None = None, 
     ) -> Page[BookOut]:
         books = await load_books()
+        books = [Book(**book) for book in books]
         books_out = []
         for book in books:
-            if author and book["author"] != author:
+            if author and book.author != author:
                 continue
-            if genre and book["genre"] != genre:
+            if genre and book.genre != genre:
                 continue
-            if min_year and book["year"] < min_year:
+            if min_year and book.year < min_year:
                 continue
-            books_out.append(BookOut(**book))
+            books_out.append(BookOut(**book.model_dump()))
         
         total = len(books_out)
-        offset = common["offset"]
-        limit = common["limit"]
+        offset = common.offset
+        limit = common.limit
         books_out = books_out[offset:offset + limit]
         return Page[BookOut](items=books_out, total=total, offset=offset, limit=limit)
 
     async def create(self, book: BookCreate, user_id: CurrentUserDep, background_tasks: BackgroundTasks) -> BookOut:
         if user_id is None:
             raise HTTPException(status_code=403, detail="unauthorized")
-        books = await load_books()    
+        books = await load_books()
+        books = [Book(**b) for b in books]
         created_at = datetime.now().isoformat()
-        new_book = Book(book_id=max([stored_book["book_id"] for stored_book in books], default=0) + 1, **book.model_dump(), created_at=created_at)
-        books.append(new_book.model_dump())
-        await save_books(books)
+        new_book = Book(
+            book_id=max([stored_book.book_id for stored_book in books], default=0) + 1, 
+            author=book.author,
+            title=book.title,
+            genre=book.genre,
+            year=book.year,
+            created_at=created_at
+            )
+        books.append(new_book)
+        await save_books(books=[book.model_dump() for book in books])
         background_tasks.add_task(self.send_email_task, BookOut(**new_book.model_dump()))
         return BookOut(**new_book.model_dump())
 
@@ -61,22 +71,31 @@ class BookService:
         if user_id is None:
             raise HTTPException(status_code=403, detail="unauthorized")
         books = await load_books()
+        books = [Book(**b) for b in books]
         for i, b in enumerate(books):
-            if b["book_id"] == book_id:
-                updated_book = Book(book_id=book_id, **book.model_dump(), created_at=b["created_at"])
-                books[i] = updated_book.model_dump()
-                await save_books(books)
-                return BookOut(**books[i])
+            if b.book_id == book_id:
+                updated_book = Book(
+                    book_id=book_id, 
+                    title=book.title,
+                    author=book.author,
+                    genre=book.genre,
+                    year=book.year,
+                    created_at=b.created_at
+                    )
+                books[i] = updated_book
+                await save_books(books=[book.model_dump() for book in books])
+                return BookOut(**books[i].model_dump())
         raise BookNotFoundError(book_id=book_id)
 
     async def delete(self, book_id: int, user_id: CurrentUserDep) -> BookOut:
         if user_id is None:
             raise HTTPException(status_code=403, detail="unauthorized")
         books = await load_books()
+        books = [Book(**b) for b in books]
         for i, book in enumerate(books):
-            if book["book_id"] == book_id:
-                deleted_book = BookOut(**books[i])
+            if book.book_id == book_id:
+                deleted_book = BookOut(**books[i].model_dump())
                 books.pop(i)
-                await save_books(books)
+                await save_books(books=[book.model_dump() for book in books])
                 return deleted_book
         raise BookNotFoundError(book_id=book_id)
