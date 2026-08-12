@@ -34,13 +34,13 @@ class LoanService:
         loans = await load_loans()    
         loan_date = datetime.now().isoformat()
         new_loan = Loan(
-            loan_id=max([stored_loan["loan_id"] for stored_loan in loans], default=0) + 1, 
+            loan_id=max([stored_loan.loan_id for stored_loan in loans], default=0) + 1, 
             book_id=loan.book_id,
             user_id=loan.user_id,
             loan_date=loan_date,
             return_date=loan.return_date.isoformat()
             )
-        loans.append(new_loan.model_dump())
+        loans.append(new_loan)
         await save_loans(loans)
         return LoanOut(**new_loan.model_dump())
 
@@ -54,7 +54,7 @@ class LoanService:
             if loan.loan_id == loan_id:
                 deleted_loan = LoanOut(**loans[i].model_dump())
                 loans.pop(i)
-                await save_loans(loans=[loan.model_dump() for loan in loans])
+                await save_loans(loans)
                 return deleted_loan
         raise HTTPException(status_code=404, detail="Loan not found")
 
@@ -81,6 +81,6 @@ class LoanService:
                     return_date=loan.return_date.isoformat()
                 )
                 loans[i] = updated_loan
-                await save_loans(loans=[loan.model_dump() for loan in loans])
+                await save_loans(loans=loans)
                 return LoanOut(**loans[i].model_dump())
         raise HTTPException(status_code=404, detail="Loan not found")

@@ -1,6 +1,6 @@
 import asyncio
 
-from fastapi import Depends, HTTPException, BackgroundTasks
+from fastapi import HTTPException, BackgroundTasks
 
 from datetime import datetime
 from models import BookCreate, Book, BookOut, Page
@@ -63,7 +63,7 @@ class BookService:
             created_at=created_at
             )
         books.append(new_book)
-        await save_books(books=[book.model_dump() for book in books])
+        await save_books(books=books)
         background_tasks.add_task(self.send_email_task, BookOut(**new_book.model_dump()))
         return BookOut(**new_book.model_dump())
 
@@ -83,7 +83,7 @@ class BookService:
                     created_at=b.created_at
                     )
                 books[i] = updated_book
-                await save_books(books=[book.model_dump() for book in books])
+                await save_books(books=books)
                 return BookOut(**books[i].model_dump())
         raise BookNotFoundError(book_id=book_id)
 
@@ -96,6 +96,6 @@ class BookService:
             if book.book_id == book_id:
                 deleted_book = BookOut(**books[i].model_dump())
                 books.pop(i)
-                await save_books(books=[book.model_dump() for book in books])
+                await save_books(books=books)
                 return deleted_book
         raise BookNotFoundError(book_id=book_id)

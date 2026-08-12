@@ -14,7 +14,6 @@ class AuthorService:
         if user_id is None:
             raise HTTPException(status_code=403, detail="unauthorized")
         authors = await load_authors()
-        authors = [Author(**a) for a in authors]
         created_at = datetime.now().isoformat()
         new_author = Author(
             author_id=max([stored_author.author_id for stored_author in authors], default=0) + 1, 
@@ -22,7 +21,7 @@ class AuthorService:
             birth_year=author.birth_year,
             created_at=created_at)
         authors.append(new_author)
-        await save_authors(authors=[author.model_dump() for author in authors])
+        await save_authors(authors)
         return AuthorOut(**new_author.model_dump())
 
     async def get_authors(
@@ -31,7 +30,6 @@ class AuthorService:
         author: str | None = Query(default=None, description="Filter authors by name"),
     ) -> Page[AuthorOut]:
         authors = await load_authors()
-        authors = [Author(**a) for a in authors]
         authors_out = []
         for a in authors:
             if author and a.name != author:
@@ -46,7 +44,6 @@ class AuthorService:
 
     async def get_author(self, author_id: Annotated[int, Path(gt=0)]) -> AuthorOut:
         authors = await load_authors()
-        authors = [Author(**a) for a in authors]
         for author in authors:
             if author.author_id == author_id:
                 return AuthorOut(**author.model_dump())
@@ -56,7 +53,6 @@ class AuthorService:
         if user_id is None:
             raise HTTPException(status_code=403, detail="unauthorized")
         authors = await load_authors()
-        authors = [Author(**a) for a in authors]
         for i, a in enumerate(authors):
             if a.author_id == author_id:
                 updated_author = Author(
@@ -65,7 +61,7 @@ class AuthorService:
                     birth_year=author.birth_year,
                     created_at=a.created_at)
                 authors[i] = updated_author
-                await save_authors(authors=[author.model_dump() for author in authors])
+                await save_authors(authors)
                 return AuthorOut(**authors[i].model_dump())
         raise HTTPException(status_code=404, detail="Author not found")
 
@@ -73,11 +69,10 @@ class AuthorService:
         if user_id is None:
             raise HTTPException(status_code=403, detail="unauthorized")
         authors = await load_authors()
-        authors = [Author(**a) for a in authors]
         for i, author in enumerate(authors):
             if author.author_id == author_id:
                 deleted_author = AuthorOut(**authors[i].model_dump())
                 authors.pop(i)
-                await save_authors(authors=[author.model_dump() for author in authors])
+                await save_authors(authors)
                 return deleted_author
         raise HTTPException(status_code=404, detail="Author not found")
