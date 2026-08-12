@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-
+from datetime import datetime
 from main import app
 
 
@@ -20,12 +20,13 @@ def client(test_db):
 
 
 def test_create_loan(client):
+    # fix the return date bug cause it now uses datetime datatype instead of string
     response = client.post("/loans", json={"book_id": 1, "user_id": 1, "return_date": "2023-01-15"}, headers={"X-User-Id": "1"})
     assert response.status_code == 200
     data = response.json()
     assert data["book_id"] == 1
     assert data["user_id"] == 1
-    assert data["return_date"] == "2023-01-15"
+    assert datetime.fromisoformat(data["return_date"]) == datetime(2023, 1, 15)
     assert "loan_id" in data
 
 
