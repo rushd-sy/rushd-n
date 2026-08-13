@@ -46,7 +46,6 @@ async def get_authors(
 @router.get("/{author_id}", response_model=AuthorResponse)
 async def get_author(
         author_id: Annotated[int, Path(gt=0)],
-        user_id: Annotated[str, Depends(get_current_user)]
     ):
 
     authors = await load_authors()
@@ -64,7 +63,7 @@ async def create_author(request_author: AuthorCreate):
         **request_author.model_dump(),
         added_at=date.today(),
     )
-    authors.append(created_author.model_dump())
+    authors.append(created_author.model_dump(mode="json"))
     await save_authors(authors)
 
     return AuthorResponse(
@@ -89,7 +88,7 @@ async def update_author(
                 added_at=existing.added_at, 
             )
             
-            authors[index] = updated_author.model_dump()
+            authors[index] = updated_author.model_dump(mode="json")
             await save_authors(authors)
             
             return AuthorResponse(
@@ -100,7 +99,10 @@ async def update_author(
 
 
 @router.delete("/{author_id}")
-async def delete_author(author_id: Annotated[int, Path(gt=0)]) -> None:
+async def delete_author(
+        author_id: Annotated[int, Path(gt=0)],
+        user_id: Annotated[str, Depends(get_current_user)]
+    ) -> None:
     authors = await load_authors()
     for index, author in enumerate(authors):
         if author["author_id"] == author_id:

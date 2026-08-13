@@ -1,13 +1,17 @@
 import json
 import aiofiles
 
+BOOKS_FILE = "books.json"
+AUTHORS_FILE = "authros.json"
+LOANS_FILE = "loans.json"
+
 async def save_books(books: list[dict]) -> None:
-    async with aiofiles.open("books.json", "w") as file:
+    async with aiofiles.open(BOOKS_FILE, "w") as file:
         await file.write(json.dumps(books, indent=4))
 
 async def load_books() -> list[dict]:
     try:
-        async with aiofiles.open("books.json", "r") as file:
+        async with aiofiles.open(BOOKS_FILE, "r") as file:
             content = await file.read()
             books = json.loads(content)
     except FileNotFoundError:
@@ -19,12 +23,12 @@ async def load_books() -> list[dict]:
 
 
 async def save_authors(authors: list[dict]) -> None:
-    async with aiofiles.open("authors.json", "w") as file:
+    async with aiofiles.open(AUTHORS_FILE, "w") as file:
         await file.write(json.dumps(authors, indent=4))
 
 async def load_authors() -> list[dict]:
     try:
-        async with aiofiles.open("authors.json", "r") as file:
+        async with aiofiles.open(AUTHORS_FILE, "r") as file:
             content = await file.read()
             authors = json.loads(content)
     except FileNotFoundError:
@@ -36,12 +40,12 @@ async def load_authors() -> list[dict]:
 
 
 async def save_loans(loans: list[dict]) -> None:
-    async with aiofiles.open("loans.json", "w") as file:
+    async with aiofiles.open(LOANS_FILE, "w") as file:
         await file.write(json.dumps(loans, indent=4))
 
 async def load_loans() -> list[dict]:
     try:
-        async with aiofiles.open("loans.json", "r") as file:
+        async with aiofiles.open(LOANS_FILE, "r") as file:
             content = await file.read()
             loans = json.loads(content)
     except FileNotFoundError:

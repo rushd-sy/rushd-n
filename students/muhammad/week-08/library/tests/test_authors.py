@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch
 from datetime import date
+import json
 
 from main import app
 
@@ -12,60 +12,54 @@ def client():
         yield c
 
 @pytest.fixture
-def fake_authors():
+def temp_authors_db(tmp_path, monkeypatch):
+    authros_file = tmp_path / "authors_test.json"
+    monkeypatch.setattr("utils.storage.AUTHORS_FILE", authros_file)
+
     fake_authors_json = [
         {    
             "author_id": 1,
             "name": "Bitar",
             "birth_year": 2005,
-            "added_at": date.today(),
+            "added_at": date.today().isoformat(),
         }, 
         {
             "author_id": 2,
             "name": "Bakro",
             "birth_year": 2005,
-            "added_at": date.today(),    
+            "added_at": date.today().isoformat(),    
         }
     ]
-    return fake_authors_json.copy()
+    
+    with open(authros_file, 'w') as file:
+        json.dump(fake_authors_json, file, default=str, indent=4)
 
-@pytest.fixture
-def fake_authors_response():
-    fake_authors_response_json = [
-        {    
-            "author_id": 1,
-            "name": "Bitar",
-            "birth_year": 2005,
-        }, 
-        {
-            "author_id": 2,
-            "name": "Bakro",
-            "birth_year": 2005,
-        }
-    ]
-
-    return fake_authors_response_json.copy()
+    yield authros_file
 
 
-def test_get_authors(client, fake_authors, fake_authors_response):
-    with patch("routers.authors.load_authors", return_value=fake_authors):
-        response = client.get("/authors")
-        assert response.status_code == 200
-        assert response.json()['items'] == fake_authors_response
 
-def test_get_authors_does_not_return_creation_date(client, fake_authors, fake_authors_response):
-    with patch("routers.authors.load_authors", return_value=fake_authors):
-        response = client.get("/authors")
-        assert response.status_code == 200
-        for author in response.json()['items']:
-            assert "creation_date" not in author
-        assert response.json()['items'] == fake_authors_response
+def test_get_authors(client, temp_authors_db):
+    response = client.get("/authors")
+    assert response.status_code == 200
+    items = response.json()['items']
+    assert items[0]['author_id'] == 1
+    assert items[1]['author_id'] == 2
+    assert items[0]['name'] == 'Bitar'
+    assert items[1]['name'] == 'Bakro'
 
-def test_get_author_by_id(client, fake_authors, fake_authors_response):
-    with patch("routers.authors.load_authors", return_value=fake_authors):
-        response = client.get("/authors/1", headers={"x-user-id" : "1"})
-        assert response.status_code == 200
-        assert response.json() == fake_authors_response[0]
+def test_get_authors_does_not_return_creation_date(client, temp_authors_db):
+    response = client.get("/authors")
+    assert response.status_code == 200
+    for author in response.json()['items']:
+        assert "creation_date" not in author
+
+
+def test_get_author_by_id(client, temp_authors_db):
+    response = client.get("/authors/1")
+    assert response.status_code == 200
+    items = response.json()
+    assert items['author_id'] == 1
+    assert items['name'] == 'Bitar'
 
 @pytest.mark.parametrize(
     "author_id, expected_status_code", 
@@ -77,27 +71,20 @@ def test_get_author_by_id(client, fake_authors, fake_authors_response):
         (100, 404),
     )
 )
-def test_get_author_by_id_not_found(client, fake_authors, author_id, expected_status_code):
-    with patch("routers.authors.load_authors", return_value=fake_authors):
-        response = client.get(f"/authors/{author_id}", headers={"x-user-id" : "1"})
-        assert response.status_code == expected_status_code
+def test_get_author_by_id_not_found(client, temp_authors_db, author_id, expected_status_code):
+    response = client.get(f"/authors/{author_id}", headers={"x-user-id" : "1"})
+    assert response.status_code == expected_status_code
 
-def test_create_author(client, fake_authors):
+def test_create_author(client, temp_authors_db):
     new_author =     {    
         "name": "Ahmad",
         "birth_year": 20010,
         "added_at": 2020,
     }
-    
-    with patch(
-        "routers.authors.load_authors", return_value=fake_authors
-    ), patch(
-        "routers.authors.save_authors"):
-
-        response = client.post("/authors", json=new_author)
-        assert response.status_code == 200
-        assert response.json()['author_id'] == 3
-        assert response.json()['name'] == new_author["name"]
+    response = client.post("/authors", json=new_author)
+    assert response.status_code == 200
+    assert response.json()['author_id'] == 3
+    assert response.json()['name'] == new_author["name"]
 
 def test_create_author_fails_with_invalid_data(client):
     invalid_author = {
@@ -109,50 +96,27 @@ def test_create_author_fails_with_invalid_data(client):
     assert response.status_code == 422
 
 
-def test_delete_author(client, fake_authors, fake_authors_response):
-    with patch(
-        "routers.authors.load_authors",
-        return_value=fake_authors.copy()
-    ), patch(
-        "routers.authors.save_authors"
-    ) as mock_save_authors:
+def test_delete_author(client, temp_authors_db):
+    response = client.delete("/authors/1", headers={'x-user-id':'123'})
+    assert response.status_code == 200
+    response = client.get("authors/1")
+    assert response.status_code == 404
 
-        response = client.delete("/authors/1")
-        assert response.status_code == 200
-        mock_save_authors.assert_called_once()
-        saved_authors = mock_save_authors.call_args[0][0]
-        assert all(author["author_id"] != 1 for author in saved_authors)
-        
-def test_delete_author_not_found(client, fake_authors, fake_authors_response):
-    with patch(
-        "routers.authors.load_authors",
-        return_value=fake_authors.copy()
-    ), patch(
-        "routers.authors.save_authors"
-    ) as mock_save_authors:
+def test_delete_author_not_found(client, temp_authors_db):
 
-        response = client.delete("/authors/4")
+        response = client.delete("/authors/4", headers={'x-user-id':'123'})
         assert response.status_code == 404
-        mock_save_authors.assert_not_called()
         assert response.json()['detail'] == "author with id 4 doesn't exist"
 
-def test_update_author(client, fake_authors, fake_authors_response):
+def test_update_author(client, temp_authors_db):
     updated_author = {    
         "name": "Muhammad Bitar",
         "birth_year": 2005
     }
-    
-    with patch(
-        "routers.authors.load_authors",
-        return_value=fake_authors.copy()
-    ), patch(
-        "routers.authors.save_authors"
-    ) as mock_save_authors:
-
-        response = client.put("/authors/1", json=updated_author)
-        assert response.status_code == 200
-        mock_save_authors.assert_called_once()
-        saved_authors = mock_save_authors.call_args[0][0]
-        updated_author_in_list = next((author for author in saved_authors if author["author_id"] == 1), None)
-        assert updated_author_in_list is not None
-        assert updated_author_in_list["name"] == updated_author["name"]
+    response = client.put("/authors/1", json=updated_author)
+    assert response.status_code == 200
+    response = client.get("authors/1")
+    assert response.status_code == 200
+    updated_author_in_list = response.json()
+    assert updated_author_in_list["name"] == updated_author["name"]
+    assert updated_author_in_list["birth_year"] == updated_author["birth_year"]

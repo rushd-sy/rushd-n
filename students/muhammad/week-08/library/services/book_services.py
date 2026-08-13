@@ -71,9 +71,9 @@ class BookServices:
         created_book = BookModel(
         book_id=max([book["book_id"] for book in books], default=0) + 1,
             **request_book.model_dump(),
-            creation_date=date(2000, 10, 20),
+            creation_date=date.today(),
         )
-        books.append(created_book.model_dump())
+        books.append(created_book.model_dump(mode="json"))
         await BookServices._save_books(books)
         respond = BookResponse(
             **created_book.model_dump(),
@@ -103,7 +103,7 @@ class BookServices:
                     creation_date=existing.creation_date,
                 )
                 
-                books[index] = UpdatedBook.model_dump()
+                books[index] = UpdatedBook.model_dump(mode="json")
                 await save_books(books)
                 
                 return BookResponse(

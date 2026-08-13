@@ -35,7 +35,6 @@ async def get_books(
 @router.get("/{book_id}", response_model=BookResponse)
 async def get_book(
         book_id: Annotated[int, Path(gt=0)],
-        user_id: Annotated[str, Depends(get_current_user)],
         book_service: Annotated[BookServices, Depends(BookServices)]
     ) -> BookResponse:
     return await book_service.get_book_by_id(book_id=book_id)
@@ -52,7 +51,11 @@ async def create_book(request_book: BookCreate, book_service: Annotated[BookServ
     return response
 
 @router.delete("/{book_id}")
-async def delete_book(book_id: Annotated[int, Path(gt=0)], book_service: Annotated[BookServices, Depends(BookServices)]) -> None:
+async def delete_book(
+        book_id: Annotated[int, Path(gt=0)],
+        book_service: Annotated[BookServices, Depends(BookServices)],
+        user_id: Annotated[str, Depends(get_current_user)],
+    ) -> None:
     await book_service.delete_book(book_id)
 
 @router.put("/{book_id}")

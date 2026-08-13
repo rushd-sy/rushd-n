@@ -50,7 +50,6 @@ async def get_loans(
 @router.get("/{loan_id}", response_model=LoanResponse)
 async def get_loan(
         loan_id: Annotated[int, Path(gt=0)],
-        user_id: Annotated[str, Depends(get_current_user)]
     ):
     
     loans = await load_loans()
@@ -69,7 +68,7 @@ async def create_loan(request_loan: LoanCreate):
         **request_loan.model_dump(),
         added_at=date.today(),
     )
-    loans.append(created_loan.model_dump())
+    loans.append(created_loan.model_dump(mode="json"))
     await save_loans(loans)
 
     return LoanResponse(
@@ -93,7 +92,7 @@ async def update_loan(
                 added_at=existing.added_at,
             )
             
-            loans[index] = updated_loan.model_dump()
+            loans[index] = updated_loan.model_dump(mode="json")
             await save_loans(loans)
             
             return LoanResponse(
@@ -104,7 +103,11 @@ async def update_loan(
 
 
 @router.delete("/{loan_id}")
-async def delete_loan(loan_id: Annotated[int, Path(gt=0)]) -> None:
+async def delete_loan(
+        loan_id: Annotated[int, Path(gt=0)],
+        user_id: Annotated[str, Depends(get_current_user)],
+    ) -> None:
+    
     loans = await load_loans()
     for index, loan in enumerate(loans):
         if loan["loan_id"] == loan_id:
