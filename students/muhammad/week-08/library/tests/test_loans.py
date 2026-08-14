@@ -106,7 +106,7 @@ def test_delete_loan(client, temp_loans_dp):
 def test_delete_loan_not_found(client, temp_loans_dp):
     response = client.delete("/loans/4", headers={'x-user-id':'123'})
     assert response.status_code == 404
-    assert response.json()['detail'] == "loan with id 4 doesn't exist"
+    assert response.json()['details'] == "Loan with id 4 doesn't exist"
 
 def test_update_loan(client, temp_loans_dp):
     updated_loan =     {

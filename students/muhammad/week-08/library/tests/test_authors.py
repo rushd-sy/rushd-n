@@ -106,7 +106,7 @@ def test_delete_author_not_found(client, temp_authors_db):
 
         response = client.delete("/authors/4", headers={'x-user-id':'123'})
         assert response.status_code == 404
-        assert response.json()['detail'] == "author with id 4 doesn't exist"
+        assert response.json()['details'] == "Author with id 4 doesn't exist"
 
 def test_update_author(client, temp_authors_db):
     updated_author = {    
