@@ -14,7 +14,7 @@ async def get_loans(
     loan_services: Annotated[LoanServices, Depends(LoanServices)],
     pagination_params: Annotated[dict, Depends(get_pagination_params)],
     name: str | None = None,
-    loan_date: str | None = None,
+    loan_date: date | None = None,
     min_date: date | None = None,
     max_date: date | None = None,
     ) -> Page[LoanResponse]:

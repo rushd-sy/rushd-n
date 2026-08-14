@@ -18,7 +18,7 @@ class LoanServices:
     async def get_loans(
             self,
             name: str | None = None,
-            loan_date: str | None = None,
+            loan_date: date | None = None,
             min_date: date | None = None,
             max_date: date | None = None,
             offset: int = 0,
