@@ -76,7 +76,7 @@ def test_get_book_by_id(client, temp_books_db):
     ]
 )
 def test_get_book_by_id_not_found(client, temp_books_db, book_id, expected_status_code):
-    response = client.get(f"/books/{book_id}", headers={"x-user-id" : "1"})
+    response = client.get(f"/books/{book_id}")
     assert response.status_code == expected_status_code
 
 def test_create_book(client, temp_books_db):
@@ -86,7 +86,7 @@ def test_create_book(client, temp_books_db):
         "genre" : "Sci-Fi",
         "publish_year": 2025
     }
-    response = client.post("/books", json=new_book)
+    response = client.post("/books", headers={'x-user-id':'123'}, json=new_book)
     assert 1 == 1
     assert response.status_code == 200
     assert response.json()['book_id'] == 3
@@ -98,7 +98,7 @@ def test_create_book_fails_with_invalid_data(client):
         "author" : "Bitar",
         "genre" : "Sci-Fi"
     }
-    response = client.post("/books", json=invalid_book)
+    response = client.post("/books", headers={'x-user-id':'123'}, json=invalid_book)
     assert response.status_code == 422
 
 def test_delete_book(client, temp_books_db):
@@ -120,7 +120,7 @@ def test_update_book(client, temp_books_db):
         "genre" : "Sci-Fi",
         "publish_year": 2025
     }
-    response = client.put("/books/1", json=updated_book_request)
+    response = client.put("/books/1", headers={'x-user-id':'123'}, json=updated_book_request)
     assert response.status_code == 200
     
     updated_book_response = client.get("books/1").json()

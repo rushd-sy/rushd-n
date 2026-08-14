@@ -88,7 +88,7 @@ class BookServices:
         
         raise BookNotFoundError(book_id)
     
-    async def update_book(self, book_id: int, request_book: BookCreate):
+    async def update_book(self, book_id: int, request_book: BookCreate) -> BookResponse:
         books = await BookServices._load_books()
     
         for index, book in enumerate(books):

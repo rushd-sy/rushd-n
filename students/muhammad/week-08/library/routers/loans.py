@@ -40,7 +40,8 @@ async def get_loan(
 @router.post("/", response_model=LoanResponse)
 async def create_loan(
         loan_services: Annotated[LoanServices, Depends(LoanServices)],
-        request_loan: LoanCreate
+        request_loan: LoanCreate,
+        user_id: Annotated[str, Depends(get_current_user)],
     ):
     return await loan_services.create_loan(request_loan)
 
@@ -49,7 +50,8 @@ async def create_loan(
 async def update_loan(
         loan_services: Annotated[LoanServices, Depends(LoanServices)],
         loan_id: Annotated[int, Path(gt=0)],
-        request_loan: LoanCreate
+        request_loan: LoanCreate,
+        user_id: Annotated[str, Depends(get_current_user)],
     ):
     return await loan_services.update_loan(loan_id, request_loan)
 
@@ -60,5 +62,5 @@ async def delete_loan(
         loan_services: Annotated[LoanServices, Depends(LoanServices)],
         loan_id: Annotated[int, Path(gt=0)],
         user_id: Annotated[str, Depends(get_current_user)],
-    ) -> None:
-    await loan_services.delete_loan(loan_id)
+    ) -> LoanResponse:
+    return await loan_services.delete_loan(loan_id)

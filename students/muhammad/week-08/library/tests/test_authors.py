@@ -81,7 +81,7 @@ def test_create_author(client, temp_authors_db):
         "birth_year": 20010,
         "added_at": 2020,
     }
-    response = client.post("/authors", json=new_author)
+    response = client.post("/authors", headers={'x-user-id':'123'}, json=new_author)
     assert response.status_code == 200
     assert response.json()['author_id'] == 3
     assert response.json()['name'] == new_author["name"]
@@ -92,7 +92,7 @@ def test_create_author_fails_with_invalid_data(client):
         "author" : "Bitar",
         "genre" : "Sci-Fi"
     }
-    response = client.post("/authors", json=invalid_author)
+    response = client.post("/authors", headers={'x-user-id':'123'}, json=invalid_author)
     assert response.status_code == 422
 
 
@@ -113,7 +113,7 @@ def test_update_author(client, temp_authors_db):
         "name": "Muhammad Bitar",
         "birth_year": 2005
     }
-    response = client.put("/authors/1", json=updated_author)
+    response = client.put("/authors/1", headers={'x-user-id':'123'}, json=updated_author)
     assert response.status_code == 200
     response = client.get("authors/1")
     assert response.status_code == 200

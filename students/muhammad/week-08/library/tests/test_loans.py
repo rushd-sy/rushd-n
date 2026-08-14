@@ -82,7 +82,7 @@ def test_create_loan(client, temp_loans_dp):
         "name" : "Bitar",
     }
 
-    response = client.post("/loans", json=new_loan)
+    response = client.post("/loans", headers={'x-user-id':'123'}, json=new_loan)
     assert response.status_code == 200
     assert response.json()['loan_id'] == 3
     assert response.json()['book_id'] == new_loan["book_id"]
@@ -93,7 +93,7 @@ def test_create_loan_fails_with_invalid_data(client):
         "author" : "Bitar",
         "genre" : "Sci-Fi"
     }
-    response = client.post("/loans", json=invalid_loan)
+    response = client.post("/loans", headers={'x-user-id':'123'}, json=invalid_loan)
     assert response.status_code == 422
 
 
@@ -115,7 +115,7 @@ def test_update_loan(client, temp_loans_dp):
         "name" : "Amjad",
     }
 
-    response = client.put("/loans/1", json=updated_loan)
+    response = client.put("/loans/1", headers={'x-user-id':'123'}, json=updated_loan)
     assert response.status_code == 200
     response = client.get('/loans/1')
     assert response.status_code == 200

@@ -32,7 +32,7 @@ class LoanServices:
             loan = LoanResponse(**loan_model.model_dump())
             if name and loan.name != name:
                 continue
-            if loan_date and loan.loan_date != date:
+            if loan_date and loan.loan_date != loan_date:
                 continue
             if min_date and loan.loan_date < min_date:
                 continue
