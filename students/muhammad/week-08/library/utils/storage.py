@@ -2,7 +2,7 @@ import json
 import aiofiles
 
 BOOKS_FILE = "books.json"
-AUTHORS_FILE = "authros.json"
+AUTHORS_FILE = "authors.json"
 LOANS_FILE = "loans.json"
 
 async def save_books(books: list[dict]) -> None:
