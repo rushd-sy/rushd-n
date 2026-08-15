@@ -65,3 +65,33 @@ def test_unauthorized_access(client):
     )
     assert response.status_code == 401
     assert response.json() == {"detail": "unauthorized"}
+
+def test_delete_loan(client):
+    response = client.post(
+        "/loans",
+        json={"book_id": 1, "user_id": 1, "return_date": "2023-01-15"},
+        headers={"X-User-Id": "1"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    loan_id = data["loan_id"]
+
+    delete_response = client.delete(f"/loans/{loan_id}", headers={"X-User-Id": "1"})
+    assert delete_response.status_code == 200
+    deleted_data = delete_response.json()
+    assert deleted_data["loan_id"] == loan_id
+
+def test_get_loan(client):
+    response = client.post(
+        "/loans",
+        json={"book_id": 1, "user_id": 1, "return_date": "2023-01-15"},
+        headers={"X-User-Id": "1"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    loan_id = data["loan_id"]
+
+    get_response = client.get(f"/loans/{loan_id}")
+    assert get_response.status_code == 200
+    get_data = get_response.json()
+    assert get_data["loan_id"] == loan_id

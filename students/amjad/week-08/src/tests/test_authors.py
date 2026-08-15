@@ -61,3 +61,39 @@ def test_unauthorized_access(client):
     response = client.post("/authors", json={"name": "John Doe", "birth_year": 1990})
     assert response.status_code == 401
     assert response.json() == {"detail": "unauthorized"}
+
+def test_delete_author(client):
+    response = client.post(
+        "/authors",
+        json={"name": "John Doe", "birth_year": 1990},
+        headers={"X-User-Id": "1"},
+    )
+    assert response.status_code == 200
+    author_id = response.json()["author_id"]
+
+    response = client.delete(f"/authors/{author_id}", headers={"X-User-Id": "1"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["author_id"] == author_id
+    assert data["name"] == "John Doe"
+    assert data["birth_year"] == 1990
+
+def test_update_author(client):
+    response = client.post(
+        "/authors",
+        json={"name": "John Doe", "birth_year": 1990},
+        headers={"X-User-Id": "1"},
+    )
+    assert response.status_code == 200
+    author_id = response.json()["author_id"]
+
+    response = client.put(
+        f"/authors/{author_id}",
+        json={"name": "Jane Doe", "birth_year": 1995},
+        headers={"X-User-Id": "1"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["author_id"] == author_id
+    assert data["name"] == "Jane Doe"
+    assert data["birth_year"] == 1995
