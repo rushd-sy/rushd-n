@@ -13,7 +13,7 @@ class AuthorService:
         self, author: AuthorCreate, user_id: CurrentUserDep
     ) -> AuthorOut:
         if user_id is None:
-            raise HTTPException(status_code=403, detail="unauthorized")
+            raise HTTPException(status_code=401, detail="unauthorized")
         authors = await load_authors()
         created_at = datetime.now().isoformat()
         new_author = Author(
@@ -63,7 +63,7 @@ class AuthorService:
         user_id: CurrentUserDep,
     ) -> AuthorOut:
         if user_id is None:
-            raise HTTPException(status_code=403, detail="unauthorized")
+            raise HTTPException(status_code=401, detail="unauthorized")
         authors = await load_authors()
         for i, a in enumerate(authors):
             if a.author_id == author_id:
@@ -82,7 +82,7 @@ class AuthorService:
         self, author_id: Annotated[int, Path(gt=0)], user_id: CurrentUserDep
     ) -> AuthorOut:
         if user_id is None:
-            raise HTTPException(status_code=403, detail="unauthorized")
+            raise HTTPException(status_code=401, detail="unauthorized")
         authors = await load_authors()
         for i, author in enumerate(authors):
             if author.author_id == author_id:

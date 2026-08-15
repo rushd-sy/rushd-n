@@ -94,5 +94,5 @@ def test_unauthorized_access(client):
             "year": 1925,
         },
     )
-    assert response.status_code == 403
+    assert response.status_code == 401
     assert response.json() == {"detail": "unauthorized"}

@@ -28,7 +28,7 @@ class LoanService:
 
     async def create_loan(self, loan: LoanCreate, user_id: CurrentUserDep) -> LoanOut:
         if user_id is None:
-            raise HTTPException(status_code=403, detail="unauthorized")
+            raise HTTPException(status_code=401, detail="unauthorized")
         loans = await load_loans()
         loan_date = datetime.now().isoformat()
         new_loan = Loan(
@@ -46,7 +46,7 @@ class LoanService:
         self, loan_id: Annotated[int, Path(gt=0)], user_id: CurrentUserDep
     ) -> LoanOut:
         if user_id is None:
-            raise HTTPException(status_code=403, detail="unauthorized")
+            raise HTTPException(status_code=401, detail="unauthorized")
         loans = await load_loans()
         for i, loan in enumerate(loans):
             if loan.loan_id == loan_id:
@@ -70,7 +70,7 @@ class LoanService:
         user_id: CurrentUserDep,
     ) -> LoanOut:
         if user_id is None:
-            raise HTTPException(status_code=403, detail="unauthorized")
+            raise HTTPException(status_code=401, detail="unauthorized")
         loans = await load_loans()
         for i, l in enumerate(loans):
             if l.loan_id == loan_id:

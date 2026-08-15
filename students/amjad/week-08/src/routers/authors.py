@@ -3,7 +3,7 @@ from typing import Annotated
 
 from models import AuthorCreate, AuthorOut, Page
 from dependency import CommonsDepForPagination, CurrentUserDep
-from services.author_serves import AuthorService
+from services.author_service import AuthorService
 
 router = APIRouter()
 

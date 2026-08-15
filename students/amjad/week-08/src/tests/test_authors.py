@@ -59,5 +59,5 @@ def test_update_author_not_found(client):
 
 def test_unauthorized_access(client):
     response = client.post("/authors", json={"name": "John Doe", "birth_year": 1990})
-    assert response.status_code == 403
+    assert response.status_code == 401
     assert response.json() == {"detail": "unauthorized"}

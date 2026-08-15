@@ -54,7 +54,7 @@ class BookService:
         background_tasks: BackgroundTasks,
     ) -> BookOut:
         if user_id is None:
-            raise HTTPException(status_code=403, detail="unauthorized")
+            raise HTTPException(status_code=401, detail="unauthorized")
         books = await load_books()
         created_at = datetime.now().isoformat()
         new_book = Book(
@@ -76,7 +76,7 @@ class BookService:
         self, book_id: int, book: BookCreate, user_id: CurrentUserDep
     ) -> BookOut:
         if user_id is None:
-            raise HTTPException(status_code=403, detail="unauthorized")
+            raise HTTPException(status_code=401, detail="unauthorized")
         books = await load_books()
         for i, b in enumerate(books):
             if b.book_id == book_id:
@@ -95,7 +95,7 @@ class BookService:
 
     async def delete(self, book_id: int, user_id: CurrentUserDep) -> BookOut:
         if user_id is None:
-            raise HTTPException(status_code=403, detail="unauthorized")
+            raise HTTPException(status_code=401, detail="unauthorized")
         books = await load_books()
         for i, book in enumerate(books):
             if book.book_id == book_id:

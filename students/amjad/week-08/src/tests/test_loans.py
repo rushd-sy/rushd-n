@@ -63,5 +63,5 @@ def test_unauthorized_access(client):
     response = client.post(
         "/loans", json={"book_id": 1, "user_id": 1, "return_date": "2023-01-15"}
     )
-    assert response.status_code == 403
+    assert response.status_code == 401
     assert response.json() == {"detail": "unauthorized"}
