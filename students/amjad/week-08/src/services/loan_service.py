@@ -17,9 +17,8 @@ class LoanService:
         loans = await load_loans()
         loans_out = []
         for loan in loans:
-            if loan_date and loan.loan_date != loan_date.isoformat():
-                continue
-            loans_out.append(LoanOut(**loan.model_dump()))
+            if loan_date is None or loan.loan_date.startswith(loan_date.date().isoformat()):
+                loans_out.append(LoanOut(**loan.model_dump()))
 
         total = len(loans_out)
         offset = commons.offset
