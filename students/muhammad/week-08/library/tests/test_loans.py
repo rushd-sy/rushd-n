@@ -28,7 +28,21 @@ def temp_loans_dp(tmp_path, monkeypatch):
             "loan_date": date.today().isoformat(),
             "name" : "Muhammad",
             "added_at": date.today().isoformat()
-        }
+        },
+        {
+            "loan_id": 3,
+            "book_id": 101,
+            "loan_date": "2026-01-20",
+            "name": "Alice Johnson",
+            "added_at": "2026-01-20"
+        },
+        {
+            "loan_id": 4,
+            "book_id": 102,
+            "loan_date": "2026-01-20",
+            "name": "Alice Johnson",
+            "added_at": "2026-01-20"
+        },
     ]
     
     with open(loans_file, 'w') as file:
@@ -46,6 +60,21 @@ def test_get_loans(client, temp_loans_dp):
     assert items[1]['book_id'] == 1
     assert items[0]['loan_date'] == date.today().isoformat()
     assert items[1]['loan_date'] == date.today().isoformat()
+
+def test_get_loans_filterd(client, temp_loans_dp):
+    response = client.get('/loans', params={"loan_date":"2026-01-20"})
+    assert response.status_code == 200
+
+    items = response.json()['items']
+    assert len(items) == 2
+    assert items[0]['loan_id'] == 3
+    assert items[1]['loan_id'] == 4
+    assert items[0]['book_id'] == 101
+    assert items[1]['book_id'] == 102
+    assert items[0]['loan_date'] == "2026-01-20"
+    assert items[1]['loan_date'] == "2026-01-20"
+
+
 
 def test_get_loans_does_not_return_creation_date(client, temp_loans_dp):
     response = client.get("/loans")
@@ -84,7 +113,7 @@ def test_create_loan(client, temp_loans_dp):
 
     response = client.post("/loans", headers={'x-user-id':'123'}, json=new_loan)
     assert response.status_code == 200
-    assert response.json()['loan_id'] == 3
+    assert response.json()['loan_id'] == 5
     assert response.json()['book_id'] == new_loan["book_id"]
 
 def test_create_loan_fails_with_invalid_data(client):
@@ -104,9 +133,9 @@ def test_delete_loan(client, temp_loans_dp):
         assert response.status_code == 404        
         
 def test_delete_loan_not_found(client, temp_loans_dp):
-    response = client.delete("/loans/4", headers={'x-user-id':'123'})
+    response = client.delete("/loans/200", headers={'x-user-id':'123'})
     assert response.status_code == 404
-    assert response.json()['details'] == "Loan with id 4 doesn't exist"
+    assert response.json()['details'] == "Loan with id 200 doesn't exist"
 
 def test_update_loan(client, temp_loans_dp):
     updated_loan =     {
