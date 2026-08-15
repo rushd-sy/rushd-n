@@ -1,15 +1,19 @@
 from fastapi import Request
 import logging
 import uuid
+
 logging.basicConfig(level=logging.INFO)
 
 
 async def log_requests(request: Request, call_next):
     import time
+
     start_time = time.perf_counter()
     response = await call_next(request)
-    duration = (time.perf_counter() - start_time)
-    logging.info(f"{request.method} {request.url.path} {response.status_code} {duration}ms")
+    duration = time.perf_counter() - start_time
+    logging.info(
+        f"{request.method} {request.url.path} {response.status_code} {duration}ms"
+    )
     return response
 
 

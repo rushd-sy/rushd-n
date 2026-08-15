@@ -1,4 +1,3 @@
-
 from fastapi import Depends, Path, APIRouter, BackgroundTasks
 from typing import Annotated
 
@@ -6,7 +5,6 @@ from models import BookCreate, BookOut, Page
 from dependency import CommonsDepForPagination, CurrentUserDep
 from services.book_service import BookService
 
-    
 router = APIRouter()
 
 
@@ -28,10 +26,13 @@ async def get_books(
     - **limit**: The maximum number of items to return (default is 10, maximum is 20).
     """
     return await service.list(commons, author, genre, min_year)
-    
+
+
 # `async def` because it performs an I/O operation such as reading from storage
 @router.get("/{book_id}", response_model=BookOut)
-async def get_book(book_id: Annotated[int, Path(gt=0)], service: BookService = Depends(BookService)) -> BookOut:
+async def get_book(
+    book_id: Annotated[int, Path(gt=0)], service: BookService = Depends(BookService)
+) -> BookOut:
     """
     Retrieve a book by its ID.
     - **book_id**: The ID of the book to retrieve and must be a positive integer.
@@ -42,7 +43,12 @@ async def get_book(book_id: Annotated[int, Path(gt=0)], service: BookService = D
 
 # `async def` because they perform I/O operations
 @router.post("/", response_model=BookOut)
-async def create_book(book: BookCreate, user_id: CurrentUserDep, background_tasks: BackgroundTasks, service: BookService = Depends(BookService)) -> BookOut:
+async def create_book(
+    book: BookCreate,
+    user_id: CurrentUserDep,
+    background_tasks: BackgroundTasks,
+    service: BookService = Depends(BookService),
+) -> BookOut:
     """
     Create a new book.
     - **book**: The details of the book to create.
@@ -55,7 +61,12 @@ async def create_book(book: BookCreate, user_id: CurrentUserDep, background_task
 
 # `async def` because they perform I/O operations
 @router.put("/{book_id}", response_model=BookOut)
-async def update_book(book_id: Annotated[int, Path(gt=0)], book: BookCreate, user_id: CurrentUserDep, service: BookService = Depends(BookService)) -> BookOut:
+async def update_book(
+    book_id: Annotated[int, Path(gt=0)],
+    book: BookCreate,
+    user_id: CurrentUserDep,
+    service: BookService = Depends(BookService),
+) -> BookOut:
     """
     Update an existing book.
     - **book_id**: The ID of the book to update and must be a positive integer.
@@ -68,7 +79,11 @@ async def update_book(book_id: Annotated[int, Path(gt=0)], book: BookCreate, use
 
 # `async def` because they perform I/O operations
 @router.delete("/{book_id}", response_model=BookOut)
-async def delete_book(book_id: Annotated[int, Path(gt=0)], user_id: CurrentUserDep, service: BookService = Depends(BookService)) -> BookOut:
+async def delete_book(
+    book_id: Annotated[int, Path(gt=0)],
+    user_id: CurrentUserDep,
+    service: BookService = Depends(BookService),
+) -> BookOut:
     """
     Delete a book by its ID.
     - **book_id**: The ID of the book to delete and must be a positive integer.

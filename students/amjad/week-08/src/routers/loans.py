@@ -6,7 +6,6 @@ from models import LoanCreate, LoanOut, Page
 from dependency import CommonsDepForPagination, CurrentUserDep
 from services.loan_service import LoanService
 
-
 router = APIRouter()
 
 
@@ -25,9 +24,14 @@ async def get_loans(
     """
     return await service.get_loans(commons, loan_date)
 
+
 # `async def` because they perform I/O operations
 @router.post("/", response_model=LoanOut)
-async def create_loan(loan: LoanCreate, user_id: CurrentUserDep, service: LoanService = Depends(LoanService)) -> LoanOut:
+async def create_loan(
+    loan: LoanCreate,
+    user_id: CurrentUserDep,
+    service: LoanService = Depends(LoanService),
+) -> LoanOut:
     """
     Create a new loan.
     - **loan**: The details of the loan to create.
@@ -35,10 +39,15 @@ async def create_loan(loan: LoanCreate, user_id: CurrentUserDep, service: LoanSe
     - Returns the created loan details.
     """
     return await service.create_loan(loan, user_id)
-    
+
+
 # `async def` because they perform I/O operations
 @router.delete("/{loan_id}", response_model=LoanOut)
-async def delete_loan(loan_id: Annotated[int, Path(gt=0)], user_id: CurrentUserDep, service: LoanService = Depends(LoanService)) -> LoanOut:
+async def delete_loan(
+    loan_id: Annotated[int, Path(gt=0)],
+    user_id: CurrentUserDep,
+    service: LoanService = Depends(LoanService),
+) -> LoanOut:
     """
     Delete a loan by its ID.
     - **loan_id**: The ID of the loan to delete and must be a positive integer.
@@ -47,9 +56,12 @@ async def delete_loan(loan_id: Annotated[int, Path(gt=0)], user_id: CurrentUserD
     """
     return await service.delete_loan(loan_id, user_id)
 
+
 # `async def` because they perform I/O operations
 @router.get("/{loan_id}", response_model=LoanOut)
-async def get_loan(loan_id: Annotated[int, Path(gt=0)], service: LoanService = Depends(LoanService)) -> LoanOut:
+async def get_loan(
+    loan_id: Annotated[int, Path(gt=0)], service: LoanService = Depends(LoanService)
+) -> LoanOut:
     """
     Retrieve a loan by its ID.
     - **loan_id**: The ID of the loan to retrieve and must be a positive integer.
@@ -57,9 +69,15 @@ async def get_loan(loan_id: Annotated[int, Path(gt=0)], service: LoanService = D
     """
     return await service.get_loan(loan_id)
 
+
 # `async def` because they perform I/O operations
 @router.put("/{loan_id}", response_model=LoanOut)
-async def update_loan(loan_id: Annotated[int, Path(gt=0)], loan: LoanCreate, user_id: CurrentUserDep, service: LoanService = Depends(LoanService)) -> LoanOut:
+async def update_loan(
+    loan_id: Annotated[int, Path(gt=0)],
+    loan: LoanCreate,
+    user_id: CurrentUserDep,
+    service: LoanService = Depends(LoanService),
+) -> LoanOut:
     """
     Update an existing loan.
     - **loan_id**: The ID of the loan to update and must be a positive integer.

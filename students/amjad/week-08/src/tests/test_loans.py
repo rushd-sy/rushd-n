@@ -21,7 +21,11 @@ def client(test_db):
 
 def test_create_loan(client):
     # fix the return date bug cause it now uses datetime datatype instead of string
-    response = client.post("/loans", json={"book_id": 1, "user_id": 1, "return_date": "2023-01-15"}, headers={"X-User-Id": "1"})
+    response = client.post(
+        "/loans",
+        json={"book_id": 1, "user_id": 1, "return_date": "2023-01-15"},
+        headers={"X-User-Id": "1"},
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["book_id"] == 1
@@ -30,24 +34,34 @@ def test_create_loan(client):
     assert "loan_id" in data
 
 
-@pytest.mark.parametrize("invalid_input", [
-    {"book_id": -1, "user_id": 1, "return_date": "2023-01-15"},
-    {"book_id": 1, "user_id": -1, "return_date": "2023-01-15"},
-    {"book_id": 1, "user_id": 1, "return_date": ""},
-    {"book_id": 1, "user_id": 1},
-    {"book_id": 1, "return_date": "2023-01-15"},
-])
+@pytest.mark.parametrize(
+    "invalid_input",
+    [
+        {"book_id": -1, "user_id": 1, "return_date": "2023-01-15"},
+        {"book_id": 1, "user_id": -1, "return_date": "2023-01-15"},
+        {"book_id": 1, "user_id": 1, "return_date": ""},
+        {"book_id": 1, "user_id": 1},
+        {"book_id": 1, "return_date": "2023-01-15"},
+    ],
+)
 def test_create_loan_invalid_input(client, invalid_input):
     response = client.post("/loans", json=invalid_input)
     assert response.status_code == 422
 
 
 def test_update_loan_not_found(client):
-    response = client.put("/loans/999", json={"book_id": 1, "user_id": 1, "return_date": "2023-01-15"}, headers={"X-User-Id": "1"})
+    response = client.put(
+        "/loans/999",
+        json={"book_id": 1, "user_id": 1, "return_date": "2023-01-15"},
+        headers={"X-User-Id": "1"},
+    )
     assert response.status_code == 404
     assert response.json() == {"detail": "Loan not found"}
 
+
 def test_unauthorized_access(client):
-    response = client.post("/loans", json={"book_id": 1, "user_id": 1, "return_date": "2023-01-15"})
+    response = client.post(
+        "/loans", json={"book_id": 1, "user_id": 1, "return_date": "2023-01-15"}
+    )
     assert response.status_code == 403
     assert response.json() == {"detail": "unauthorized"}

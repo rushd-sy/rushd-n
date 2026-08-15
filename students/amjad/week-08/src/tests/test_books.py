@@ -18,8 +18,18 @@ def test_db(tmp_path, monkeypatch):
 def client(test_db):
     return TestClient(app)
 
+
 def test_create_book(client):
-    response = client.post("/books", json={"title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "genre": "Fiction", "year": 1925}, headers={"X-User-Id": "1"})
+    response = client.post(
+        "/books",
+        json={
+            "title": "The Great Gatsby",
+            "author": "F. Scott Fitzgerald",
+            "genre": "Fiction",
+            "year": 1925,
+        },
+        headers={"X-User-Id": "1"},
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["title"] == "The Great Gatsby"
@@ -29,24 +39,60 @@ def test_create_book(client):
     assert "book_id" in data
 
 
-@pytest.mark.parametrize("invalid_input", [
-    {"title": "", "author": "F. Scott Fitzgerald", "genre": "Fiction", "year": 1925},
-    {"title": "The Great Gatsby", "author": "", "genre": "Fiction", "year": 1925},
-    {"title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "genre": "", "year": 1925},
-    {"title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "genre": "Fiction", "year": -1},
-    {"title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "year": 1925},
-])
+@pytest.mark.parametrize(
+    "invalid_input",
+    [
+        {
+            "title": "",
+            "author": "F. Scott Fitzgerald",
+            "genre": "Fiction",
+            "year": 1925,
+        },
+        {"title": "The Great Gatsby", "author": "", "genre": "Fiction", "year": 1925},
+        {
+            "title": "The Great Gatsby",
+            "author": "F. Scott Fitzgerald",
+            "genre": "",
+            "year": 1925,
+        },
+        {
+            "title": "The Great Gatsby",
+            "author": "F. Scott Fitzgerald",
+            "genre": "Fiction",
+            "year": -1,
+        },
+        {"title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "year": 1925},
+    ],
+)
 def test_create_book_invalid_input(client, invalid_input):
     response = client.post("/books", json=invalid_input)
     assert response.status_code == 422
 
 
 def test_update_book_not_found(client):
-    response = client.put("/books/999", json={"title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "genre": "Fiction", "year": 1925}, headers={"X-User-Id": "1"})
+    response = client.put(
+        "/books/999",
+        json={
+            "title": "The Great Gatsby",
+            "author": "F. Scott Fitzgerald",
+            "genre": "Fiction",
+            "year": 1925,
+        },
+        headers={"X-User-Id": "1"},
+    )
     assert response.status_code == 404
     assert response.json() == {"message": "Book 999 not found"}
 
+
 def test_unauthorized_access(client):
-    response = client.post("/books", json={"title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "genre": "Fiction", "year": 1925})
+    response = client.post(
+        "/books",
+        json={
+            "title": "The Great Gatsby",
+            "author": "F. Scott Fitzgerald",
+            "genre": "Fiction",
+            "year": 1925,
+        },
+    )
     assert response.status_code == 403
     assert response.json() == {"detail": "unauthorized"}
