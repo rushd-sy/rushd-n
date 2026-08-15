@@ -17,7 +17,6 @@ class BookService:
 
     async def get_by_id(self, book_id: int) -> BookOut:
         books = await load_books()
-        books = [Book(**book) for book in books]
         for book in books:
             if book.book_id == book_id:
                 return BookOut(**book.model_dump())
@@ -31,7 +30,6 @@ class BookService:
         min_year: int | None = None, 
     ) -> Page[BookOut]:
         books = await load_books()
-        books = [Book(**book) for book in books]
         books_out = []
         for book in books:
             if author and book.author != author:
@@ -52,7 +50,6 @@ class BookService:
         if user_id is None:
             raise HTTPException(status_code=403, detail="unauthorized")
         books = await load_books()
-        books = [Book(**b) for b in books]
         created_at = datetime.now().isoformat()
         new_book = Book(
             book_id=max([stored_book.book_id for stored_book in books], default=0) + 1, 
@@ -71,7 +68,6 @@ class BookService:
         if user_id is None:
             raise HTTPException(status_code=403, detail="unauthorized")
         books = await load_books()
-        books = [Book(**b) for b in books]
         for i, b in enumerate(books):
             if b.book_id == book_id:
                 updated_book = Book(
@@ -91,7 +87,6 @@ class BookService:
         if user_id is None:
             raise HTTPException(status_code=403, detail="unauthorized")
         books = await load_books()
-        books = [Book(**b) for b in books]
         for i, book in enumerate(books):
             if book.book_id == book_id:
                 deleted_book = BookOut(**books[i].model_dump())

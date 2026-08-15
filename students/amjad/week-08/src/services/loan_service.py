@@ -15,7 +15,6 @@ class LoanService:
         loan_date: datetime | None = None,
     ) -> Page[LoanOut]:
         loans = await load_loans()
-        loans = [Loan(**loan) for loan in loans]
         loans_out = []
         for loan in loans:
             if loan_date and loan.loan_date != loan_date.isoformat():
@@ -49,7 +48,6 @@ class LoanService:
         if user_id is None:
             raise HTTPException(status_code=403, detail="unauthorized")
         loans = await load_loans()
-        loans = [Loan(**loan) for loan in loans]
         for i, loan in enumerate(loans):
             if loan.loan_id == loan_id:
                 deleted_loan = LoanOut(**loans[i].model_dump())
@@ -60,7 +58,6 @@ class LoanService:
 
     async def get_loan(self, loan_id: Annotated[int, Path(gt=0)]) -> LoanOut:
         loans = await load_loans()
-        loans = [Loan(**loan) for loan in loans]
         for loan in loans:
             if loan.loan_id == loan_id:
                 return LoanOut(**loan.model_dump())
@@ -70,7 +67,6 @@ class LoanService:
         if user_id is None:
             raise HTTPException(status_code=403, detail="unauthorized")
         loans = await load_loans()
-        loans = [Loan(**l) for l in loans]
         for i, l in enumerate(loans):
             if l.loan_id == loan_id:
                 updated_loan = Loan(
