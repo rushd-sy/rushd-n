@@ -6,15 +6,7 @@ from models.page import Page
 from exceptions import LoanNotFoundError
 
 class LoanServices:
-    
-    @staticmethod
-    async def _load_loans() -> list[LoanModel]:
-        return await load_loans()
-    
-    @staticmethod
-    async def _save_loans(loans: list[LoanModel]) -> None:
-        await save_loans(loans)
-    
+
     async def get_loans(
             self,
             name: str | None = None,
@@ -25,19 +17,19 @@ class LoanServices:
             limit: int = 20
         ) -> Page[LoanResponse]:
         
-        loans = await LoanServices._load_loans()
+        loans = await load_loans()
         loans_out = []
         
         for loan_model in loans:
+            if name and loan_model.name != name:
+                continue
+            if loan_date and loan_model.loan_date != loan_date:
+                continue
+            if min_date and loan_model.loan_date < min_date:
+                continue
+            if max_date and loan_model.loan_date > max_date:
+                continue
             loan = LoanResponse(**loan_model.model_dump())
-            if name and loan.name != name:
-                continue
-            if loan_date and loan.loan_date != loan_date:
-                continue
-            if min_date and loan.loan_date < min_date:
-                continue
-            if max_date and loan.loan_date > max_date:
-                continue
             loans_out.append(loan)
         
         total = len(loans_out)
@@ -51,14 +43,14 @@ class LoanServices:
         )
     
     async def get_loan_by_id(self, loan_id: int) -> LoanResponse:
-        loans = await LoanServices._load_loans()
+        loans = await load_loans()
         for loan in loans:
             if loan.loan_id == loan_id:
                 return LoanResponse(**loan.model_dump())
         raise LoanNotFoundError(loan_id)
     
     async def create_loan(self, request_loan: LoanCreate) -> LoanResponse:
-        loans = await LoanServices._load_loans()
+        loans = await load_loans()
         created_loan = LoanModel(
             loan_id=max([loan.loan_id for loan in loans], default=0) + 1,
             **request_loan.model_dump(),

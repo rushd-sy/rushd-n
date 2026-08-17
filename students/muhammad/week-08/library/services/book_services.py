@@ -7,15 +7,6 @@ from exceptions import BookNotFoundError
 
 class BookServices:
 
-    @staticmethod
-    async def _load_books() -> list[BookModel]:
-        return await load_books()
-    
-    @staticmethod
-    async def _save_books(books: list[BookModel]) -> None:
-        await save_books(books)
-    
-
     async def get_books (        
         self,
         author : str | None = None,
@@ -25,17 +16,18 @@ class BookServices:
         limit: int = 20
     ) -> Page[BookResponse]:
         
-        books = await BookServices._load_books()
+        books = await load_books()
         books_out = []
         
         for book_model in books:
+            if author and book_model.author != author:
+                continue
+            if genre and book_model.genre != genre:
+                continue
+            if min_publish_year and book_model.publish_year < min_publish_year:
+                continue
+            
             book = BookResponse(**book_model.model_dump())
-            if author and book.author != author:
-                continue
-            if genre and book.genre != genre:
-                continue
-            if min_publish_year and book.publish_year < min_publish_year:
-                continue
             books_out.append(book)
         
         total = len(books_out)
@@ -53,7 +45,7 @@ class BookServices:
         book_id: int
     ) -> BookResponse:
         
-        books = await BookServices._load_books()
+        books = await load_books()
         
         for book in books:
             if book.book_id == book_id:
@@ -66,7 +58,7 @@ class BookServices:
         request_book: BookCreate
     ) -> BookResponse:
         
-        books = await BookServices._load_books()
+        books = await load_books()
         
         created_book = BookModel(
         book_id=max([book.book_id for book in books], default=0) + 1,
@@ -74,12 +66,12 @@ class BookServices:
             creation_date=date.today(),
         )
         books.append(created_book)
-        await BookServices._save_books(books)
+        await save_books(books)
         respond = BookResponse(**created_book.model_dump())
         return respond
 
     async def delete_book(self, book_id: int) -> BookResponse:
-        books = await BookServices._load_books()
+        books = await load_books()
         for index, book in enumerate(books):
             if book.book_id == book_id:
                 del books[index]
@@ -89,7 +81,7 @@ class BookServices:
         raise BookNotFoundError(book_id)
     
     async def update_book(self, book_id: int, request_book: BookCreate) -> BookResponse:
-        books = await BookServices._load_books()
+        books = await load_books()
     
         for index, book in enumerate(books):
             if book.book_id == book_id:

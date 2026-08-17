@@ -8,14 +8,6 @@ from exceptions import AuthorNotFoundError
 
 class AuthorServices:
 
-    @staticmethod
-    async def _load_authors() -> list[AuthorModel]:
-        return await load_authors()
-
-    @staticmethod
-    async def _save_authors(authors: list[AuthorModel]) -> None:
-        await save_authors(authors)
-
     async def get_authors(
         self,
         name: str | None = None,
@@ -24,18 +16,17 @@ class AuthorServices:
         offset: int = 0,
         limit: int = 20
     ) -> Page[AuthorResponse]:
-        authors = await AuthorServices._load_authors()
+        authors = await load_authors()
         authors_out = []
 
         for author_model in authors:
+            if name and author_model.name != name:
+                continue
+            if min_birth_year and author_model.birth_year < min_birth_year:
+                continue
+            if max_birth_year and author_model.birth_year > max_birth_year:
+                continue
             author = AuthorResponse(**author_model.model_dump())
-            
-            if name and author.name != name:
-                continue
-            if min_birth_year and author.birth_year < min_birth_year:
-                continue
-            if max_birth_year and author.birth_year > max_birth_year:
-                continue
             authors_out.append(author)
 
         total = len(authors_out)
@@ -52,7 +43,7 @@ class AuthorServices:
         self,
         author_id: int
     ) -> AuthorResponse:
-        authors = await AuthorServices._load_authors()
+        authors = await load_authors()
         for author in authors:
             if author.author_id == author_id:
                 return AuthorResponse(**author.model_dump())
@@ -63,7 +54,7 @@ class AuthorServices:
         request_author: AuthorCreate
     ) -> AuthorResponse:
 
-        authors = await AuthorServices._load_authors()
+        authors = await load_authors()
         created_author = AuthorModel(
             author_id=max(
                 [author.author_id for author in authors],
@@ -74,7 +65,7 @@ class AuthorServices:
         )
 
         authors.append(created_author)
-        await AuthorServices._save_authors(authors)
+        await save_authors(authors)
         return AuthorResponse(**created_author.model_dump())
 
     async def update_author(
@@ -83,7 +74,7 @@ class AuthorServices:
         request_author: AuthorCreate
     ) -> AuthorResponse:
 
-        authors = await AuthorServices._load_authors()
+        authors = await load_authors()
         for index, author in enumerate(authors):
             if author.author_id == author_id:
                 updated_author = AuthorModel(
@@ -92,7 +83,7 @@ class AuthorServices:
                     added_at=author.added_at
                 )
                 authors[index] = updated_author
-                await AuthorServices._save_authors(authors)
+                await save_authors(authors)
                 return AuthorResponse(**updated_author.model_dump())
         raise AuthorNotFoundError(author_id)
 
@@ -101,11 +92,11 @@ class AuthorServices:
         author_id: int
     ) -> AuthorResponse:
 
-        authors = await AuthorServices._load_authors()
+        authors = await load_authors()
         for index, author in enumerate(authors):
             if author.author_id == author_id:
                 del authors[index]
-                await AuthorServices._save_authors(authors)
+                await save_authors(authors)
                 return AuthorResponse(**author.model_dump())
 
         raise AuthorNotFoundError(author_id)
