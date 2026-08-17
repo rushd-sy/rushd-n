@@ -6,12 +6,7 @@ import json
 from main import app
 
 @pytest.fixture
-def client():
-    with TestClient(app) as c:
-        yield c
-
-@pytest.fixture
-def temp_loans_dp(tmp_path, monkeypatch):
+def temp_loans_db(tmp_path, monkeypatch):
     loans_file = tmp_path / "loans_test.json"
     monkeypatch.setattr("utils.storage.LOANS_FILE", loans_file)
     fake_loans_json = [
@@ -50,7 +45,12 @@ def temp_loans_dp(tmp_path, monkeypatch):
     
     yield loans_file
 
-def test_get_loans(client, temp_loans_dp):
+@pytest.fixture
+def client(temp_loans_db):
+    with TestClient(app) as c:
+        yield c
+
+def test_get_loans(client):
     response = client.get("/loans")
     assert response.status_code == 200
     items = response.json()['items']
@@ -61,7 +61,7 @@ def test_get_loans(client, temp_loans_dp):
     assert items[0]['loan_date'] == date.today().isoformat()
     assert items[1]['loan_date'] == date.today().isoformat()
 
-def test_get_loans_filterd(client, temp_loans_dp):
+def test_get_loans_filterd(client):
     response = client.get('/loans', params={"loan_date":"2026-01-20"})
     assert response.status_code == 200
 
@@ -76,13 +76,13 @@ def test_get_loans_filterd(client, temp_loans_dp):
 
 
 
-def test_get_loans_does_not_return_creation_date(client, temp_loans_dp):
+def test_get_loans_does_not_return_creation_date(client):
     response = client.get("/loans")
     assert response.status_code == 200
     for loan in response.json()['items']:
         assert "creation_date" not in loan
 
-def test_get_loan_by_id(client, temp_loans_dp):
+def test_get_loan_by_id(client):
     response = client.get("/loans/1")
     assert response.status_code == 200
     item = response.json()
@@ -100,11 +100,11 @@ def test_get_loan_by_id(client, temp_loans_dp):
         (100, 404),
     )
 )
-def test_get_loan_by_id_not_found(client, temp_loans_dp, loan_id, expected_statur_code):
+def test_get_loan_by_id_not_found(client, loan_id, expected_statur_code):
     response = client.get(f"/loans/{loan_id}")
     assert response.status_code == expected_statur_code
 
-def test_create_loan(client, temp_loans_dp):
+def test_create_loan(client):
     new_loan = {
         "book_id": 2,
         "loan_date": date.today().isoformat(),
@@ -126,18 +126,18 @@ def test_create_loan_fails_with_invalid_data(client):
     assert response.status_code == 422
 
 
-def test_delete_loan(client, temp_loans_dp):
+def test_delete_loan(client):
         response = client.delete("/loans/1", headers={'x-user-id':'123'})
         assert response.status_code == 200
         response = client.get("/loans/1")
         assert response.status_code == 404        
         
-def test_delete_loan_not_found(client, temp_loans_dp):
+def test_delete_loan_not_found(client):
     response = client.delete("/loans/200", headers={'x-user-id':'123'})
     assert response.status_code == 404
     assert response.json()['details'] == "Loan with id 200 doesn't exist"
 
-def test_update_loan(client, temp_loans_dp):
+def test_update_loan(client):
     updated_loan =     {
         "book_id": 5,
         "loan_date": date.today().isoformat(),

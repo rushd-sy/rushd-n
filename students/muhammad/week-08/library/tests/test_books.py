@@ -6,13 +6,6 @@ import json
 from main import app
 
 @pytest.fixture
-def client():
-    with TestClient(app) as c:
-        yield c
-
-
-
-@pytest.fixture
 def temp_books_db(tmp_path, monkeypatch):
     books_file = tmp_path / "books_test.json"
     monkeypatch.setattr("utils.storage.BOOKS_FILE", books_file)
@@ -40,7 +33,14 @@ def temp_books_db(tmp_path, monkeypatch):
 
     yield books_file
 
-def test_get_books(client, temp_books_db):
+
+@pytest.fixture
+def client(temp_books_db):
+    with TestClient(app) as c:
+        yield c
+
+
+def test_get_books(client):
     response = client.get("/books")
     
     assert response.status_code == 200
@@ -50,14 +50,14 @@ def test_get_books(client, temp_books_db):
     assert items[0]['author'] == 'Bitar'
     assert items[1]['publish_year'] == 1999
 
-def test_get_books_does_not_return_creation_date(client, temp_books_db):
+def test_get_books_does_not_return_creation_date(client):
     response = client.get("/books")
     assert response.status_code == 200
     for book in response.json()['items']:
         assert "creation_date" not in book
     assert response.json()['items'] 
 
-def test_get_book_by_id(client, temp_books_db):
+def test_get_book_by_id(client):
     response = client.get("/books/1")
     assert response.status_code == 200
     item = response.json()  
@@ -75,11 +75,11 @@ def test_get_book_by_id(client, temp_books_db):
         ("az", 422)
     ]
 )
-def test_get_book_by_id_not_found(client, temp_books_db, book_id, expected_status_code):
+def test_get_book_by_id_not_found(client, book_id, expected_status_code):
     response = client.get(f"/books/{book_id}")
     assert response.status_code == expected_status_code
 
-def test_create_book(client, temp_books_db):
+def test_create_book(client):
     new_book = {
         "title": "Third Book",
         "author" : "Bitar",
@@ -101,19 +101,19 @@ def test_create_book_fails_with_invalid_data(client):
     response = client.post("/books", headers={'x-user-id':'123'}, json=invalid_book)
     assert response.status_code == 422
 
-def test_delete_book(client, temp_books_db):
+def test_delete_book(client):
     response = client.delete("/books/1", headers={"x-user-id":"123"})
     assert response.status_code == 200
     
     response = client.get("/books/1")
     assert response.status_code == 404
 
-def test_delete_book_not_found(client, temp_books_db):
+def test_delete_book_not_found(client):
     response = client.delete("/books/4", headers={"x-user-id":"123"})
     assert response.status_code == 404
     assert response.json()['details'] == "Book with id 4 doesn't exist"
 
-def test_update_book(client, temp_books_db):
+def test_update_book(client):
     updated_book_request = {
         "title": "Updated Book",
         "author" : "Bitar",

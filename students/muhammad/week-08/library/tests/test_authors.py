@@ -5,12 +5,6 @@ import json
 
 from main import app
 
-
-@pytest.fixture
-def client():
-    with TestClient(app) as c:
-        yield c
-
 @pytest.fixture
 def temp_authors_db(tmp_path, monkeypatch):
     authros_file = tmp_path / "authors_test.json"
@@ -36,9 +30,13 @@ def temp_authors_db(tmp_path, monkeypatch):
 
     yield authros_file
 
+@pytest.fixture
+def client(temp_authors_db):
+    with TestClient(app) as c:
+        yield c
 
 
-def test_get_authors(client, temp_authors_db):
+def test_get_authors(client):
     response = client.get("/authors")
     assert response.status_code == 200
     items = response.json()['items']
@@ -47,14 +45,14 @@ def test_get_authors(client, temp_authors_db):
     assert items[0]['name'] == 'Bitar'
     assert items[1]['name'] == 'Bakro'
 
-def test_get_authors_does_not_return_creation_date(client, temp_authors_db):
+def test_get_authors_does_not_return_creation_date(client):
     response = client.get("/authors")
     assert response.status_code == 200
     for author in response.json()['items']:
         assert "creation_date" not in author
 
 
-def test_get_author_by_id(client, temp_authors_db):
+def test_get_author_by_id(client):
     response = client.get("/authors/1")
     assert response.status_code == 200
     items = response.json()
@@ -71,11 +69,11 @@ def test_get_author_by_id(client, temp_authors_db):
         (100, 404),
     )
 )
-def test_get_author_by_id_not_found(client, temp_authors_db, author_id, expected_status_code):
+def test_get_author_by_id_not_found(client, author_id, expected_status_code):
     response = client.get(f"/authors/{author_id}", headers={"x-user-id" : "1"})
     assert response.status_code == expected_status_code
 
-def test_create_author(client, temp_authors_db):
+def test_create_author(client):
     new_author =     {    
         "name": "Ahmad",
         "birth_year": 20010,
@@ -96,19 +94,19 @@ def test_create_author_fails_with_invalid_data(client):
     assert response.status_code == 422
 
 
-def test_delete_author(client, temp_authors_db):
+def test_delete_author(client):
     response = client.delete("/authors/1", headers={'x-user-id':'123'})
     assert response.status_code == 200
     response = client.get("authors/1")
     assert response.status_code == 404
 
-def test_delete_author_not_found(client, temp_authors_db):
+def test_delete_author_not_found(client):
 
         response = client.delete("/authors/4", headers={'x-user-id':'123'})
         assert response.status_code == 404
         assert response.json()['details'] == "Author with id 4 doesn't exist"
 
-def test_update_author(client, temp_authors_db):
+def test_update_author(client):
     updated_author = {    
         "name": "Muhammad Bitar",
         "birth_year": 2005
