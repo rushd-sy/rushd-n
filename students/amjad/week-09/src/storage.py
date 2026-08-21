@@ -1,6 +1,6 @@
 import json
 import aiofiles
-from models import Book, Author, Loan
+from models import Book, Author, Loan, User
 
 
 async def load_books() -> list[Book]:
@@ -55,3 +55,20 @@ async def load_authors() -> list[Author]:
 async def save_authors(authors: list[Author]) -> None:
     async with aiofiles.open("authors.json", "w", encoding="utf-8") as f:
         await f.write(json.dumps([author.model_dump() for author in authors], indent=4))
+
+async def load_users() -> list[User]:
+    try:
+        async with aiofiles.open("users.json", "r", encoding="utf-8") as f:
+            users = json.loads(await f.read())
+    except FileNotFoundError:
+        users = []
+
+        async with aiofiles.open("users.json", "w", encoding="utf-8") as f:
+            await f.write(json.dumps(users, indent=4))
+
+    return [User(**u) for u in users]
+
+
+async def save_users(users: list[User]) -> None:
+    async with aiofiles.open("users.json", "w", encoding="utf-8") as f:
+        await f.write(json.dumps([user.model_dump() for user in users], indent=4))

@@ -1,6 +1,8 @@
 from fastapi import Depends, Header, Query
 from typing import Annotated
-from models import PageParams
+
+from pydantic import EmailStr
+from models import LoginData, LoginData, PageParams
 
 
 async def get_pagination_params(
@@ -15,6 +17,11 @@ async def get_current_user(
 ) -> int | None:
     return X_user_id
 
+async def login_info(
+    email: Annotated[EmailStr, Header()],
+    password: Annotated[str, Header()],
+) -> LoginData:
+    return LoginData(email=email, password=password)
 
 CommonsDepForPagination = Annotated[PageParams, Depends(get_pagination_params)]
 CurrentUserDep = Annotated[int, Depends(get_current_user)]

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 from typing import TypeVar, Generic
 from datetime import datetime
 
@@ -81,3 +81,26 @@ class AuthorOut(BaseModel):
 class AuthorCreate(BaseModel):
     name: str = Field(min_length=1)
     birth_year: int = Field(gt=0)
+
+
+
+class User(BaseModel):
+    user_id: int
+    name: str
+    email: EmailStr
+    created_at: str
+    password: str
+
+class UserCreate(BaseModel):
+    name: str = Field(min_length=1)
+    email: EmailStr = Field(min_length=1)
+    password: str = Field(min_length=8)
+
+class UserOut(BaseModel):
+    user_id: int
+    name: str
+    email: EmailStr
+
+class LoginData(BaseModel):
+    email: EmailStr
+    password: str
