@@ -4,23 +4,11 @@ from typing import Annotated
 from fastapi.security import OAuth2PasswordBearer
 
 from models import UserCreate, UserOut, LoginData, Token
-from dependency import login_info
+from dependency import login_info, oauth2_scheme
 from services.auth_service import UserService
 
 router = APIRouter()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-@router.post("/jwt", response_model=Token)
-async def login_using_jwt(
-    token: Annotated[str, Depends(oauth2_scheme)],
-    service: UserService = Depends(UserService),
-) -> Token:
-    """
-    Authenticate a user using a JWT token and return another JWT token.
-    - **token**: The JWT token provided in the request header.
-    - Returns a new JWT token if successful, otherwise raises a 401 error.
-    """
-    return await service.login_using_jwt(token)
 
 @router.post("/login", response_model=Token)
 async def login(

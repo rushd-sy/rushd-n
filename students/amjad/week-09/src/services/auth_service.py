@@ -26,27 +26,6 @@ class UserService:
         to_encode.update({"exp": datetime.now(timezone.utc) + timedelta(minutes=expires_delta)})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return Token(access_token=encoded_jwt)
-    
-    def decode_access_token(self, token: str) -> TokenData:
-        try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            return TokenData(user_id=payload.get("user_id"))
-        except jwt.ExpiredSignatureError:
-            raise HTTPException(status_code=401, detail="Token has expired")
-        except jwt.InvalidTokenError:
-            raise HTTPException(status_code=401, detail="Invalid token")
-
-    async def login_using_jwt(self, token: str) -> Token:
-        payload = self.decode_access_token(token)
-        user_id = payload.user_id
-        if user_id is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        users = await load_users()
-        for user in users:
-            if user.user_id == user_id:
-                access_token = self.create_access_token(TokenData(user_id=user_id))
-                return Token(access_token=access_token.access_token)
-        raise HTTPException(status_code=404, detail="User not found")
 
     async def login(self, login_data: LoginData) -> Token:
         email, password = login_data.email, login_data.password
