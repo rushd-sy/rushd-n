@@ -1,7 +1,6 @@
 from fastapi import Depends, APIRouter
 from typing import Annotated
 
-from fastapi.security import OAuth2PasswordBearer
 
 from models import UserCreate, UserOut, LoginData, Token
 from dependency import login_info, oauth2_scheme
