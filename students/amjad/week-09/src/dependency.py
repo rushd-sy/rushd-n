@@ -31,7 +31,7 @@ def decode_access_token(token: str) -> TokenData:
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
     
-async def get_current_user(self, token: str) -> UserOut:
+async def get_current_user(self, token: str) -> int:
     payload = self.decode_access_token(token)
     user_id = payload.user_id
     if user_id is None:
@@ -39,11 +39,7 @@ async def get_current_user(self, token: str) -> UserOut:
     users = await load_users()
     for user in users:
         if user.user_id == user_id:
-            return UserOut(
-                user_id=user.user_id,
-                name=user.name,
-                email=user.email,
-            )
+            return user_id
     raise HTTPException(status_code=404, detail="User not found")
 
 
@@ -54,4 +50,4 @@ async def login_info(
     return LoginData(email=email, password=password)
 
 CommonsDepForPagination = Annotated[PageParams, Depends(get_pagination_params)]
-CurrentUserDep = Annotated[UserOut, Depends(get_current_user)]
+CurrentUserDep = Annotated[int, Depends(get_current_user)]
