@@ -1,4 +1,4 @@
-from models.users import UserResponse, UserCreate, User, UserLogin
+from models.users_models import UserResponse, UserCreate, User, UserLogin
 from utils.users_store import users
 from exceptions import DuplicateEmailError, DuplicateUsernameError, InvalidCredentialsError
 from middlewares.logging import logger

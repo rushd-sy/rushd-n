@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Path, Depends
 from typing import Annotated
 
-from models.authors import AuthorResponse, AuthorCreate
-from models.page import Page
+from models.authors_models import AuthorResponse, AuthorCreate
+from models.page_models import Page
 from dependencies import get_pagination_params, get_current_user
 from services.author_services import AuthorServices
 

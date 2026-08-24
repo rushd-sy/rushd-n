@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 
-from routers.authors import router as authors_router
-from routers.books import router as books_router
-from routers.loans import router as loans_router
-from routers.auth import router as auth_router
+from routers.authors_routers import router as authors_router
+from routers.books_routers import router as books_router
+from routers.loans_routers import router as loans_router
+from routers.auth_routers import router as auth_router
 from exceptions import (
     BookNotFoundError,
     LoanNotFoundError,

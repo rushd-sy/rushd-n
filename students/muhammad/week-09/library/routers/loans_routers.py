@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Path, Depends
 from typing import Annotated
-from models.loans import LoanResponse, LoanCreate
+from models.loans_models import LoanResponse, LoanCreate
 from datetime import date
 
-from models.page import Page
+from models.page_models import Page
 from dependencies import get_pagination_params, get_current_user
 from services.loan_services import LoanServices
 router = APIRouter(prefix="/loans")

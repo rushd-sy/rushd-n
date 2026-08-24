@@ -1,7 +1,7 @@
 from datetime import date
 
-from models.authors import AuthorModel, AuthorCreate, AuthorResponse
-from models.page import Page
+from models.authors_models import AuthorModel, AuthorCreate, AuthorResponse
+from models.page_models import Page
 from utils.storage import load_authors, save_authors
 from exceptions import AuthorNotFoundError
 

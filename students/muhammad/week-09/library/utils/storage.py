@@ -1,9 +1,9 @@
 import json
 import aiofiles
 
-from models.books import BookModel
-from models.authors import AuthorModel
-from models.loans import LoanModel
+from models.books_models import BookModel
+from models.authors_models import AuthorModel
+from models.loans_models import LoanModel
 
 BOOKS_FILE = "books.json"
 AUTHORS_FILE = "authors.json"

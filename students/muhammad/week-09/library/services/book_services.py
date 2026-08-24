@@ -1,7 +1,7 @@
 from datetime import date
 
-from models.books import BookCreate, BookModel, BookResponse
-from models.page import Page
+from models.books_models import BookCreate, BookModel, BookResponse
+from models.page_models import Page
 from utils.storage import load_books, save_books
 from exceptions import BookNotFoundError
 

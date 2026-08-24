@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends
 
-from models.users import UserCreate, UserLogin, UserResponse
+from models.users_models import UserCreate, UserLogin, UserResponse
 from services.auth_services import AuthServices
 
 router = APIRouter(prefix='/auth')

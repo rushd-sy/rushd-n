@@ -1,8 +1,8 @@
 from datetime import date
 
 from utils.storage import load_loans, save_loans
-from models.loans import LoanCreate, LoanModel, LoanResponse
-from models.page import Page
+from models.loans_models import LoanCreate, LoanModel, LoanResponse
+from models.page_models import Page
 from exceptions import LoanNotFoundError
 
 class LoanServices:

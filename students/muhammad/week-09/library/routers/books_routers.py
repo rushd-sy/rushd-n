@@ -2,8 +2,8 @@ from fastapi import APIRouter, BackgroundTasks, Path, Depends
 from typing import Annotated
 import asyncio 
 
-from models.page import Page
-from models.books import BookResponse, BookCreate
+from models.page_models import Page
+from models.books_models import BookResponse, BookCreate
 from dependencies import get_pagination_params, get_current_user
 from services.book_services import BookServices
 from middlewares.logging import logger
