@@ -7,7 +7,8 @@ from exceptions import (
     LoanNotFoundError,
     AuthorNotFoundError,
     DuplicateEmailError,
-    DuplicateUsernameError
+    DuplicateUsernameError, 
+    InvalidCredentialsError
 )
 
 
@@ -70,5 +71,17 @@ async def duplicate_username_handler(
         status_code=409,
         content={
             "details": f"Username {exc.username} alraedy exists"
+        }
+    )
+
+async def invalid_credentials_handler(
+    request: Request,
+    exc: Exception
+):
+    exc = cast(InvalidCredentialsError, exc)
+    return JSONResponse(
+        status_code=401, 
+        content={
+            "details": "Invalid credentials"
         }
     )

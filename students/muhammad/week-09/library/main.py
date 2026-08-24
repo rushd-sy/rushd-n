@@ -9,14 +9,16 @@ from exceptions import (
     LoanNotFoundError,
     AuthorNotFoundError,
     DuplicateEmailError,
-    DuplicateUsernameError
+    DuplicateUsernameError, 
+    InvalidCredentialsError
 )
 from exception_handlers import (
     book_not_found_error_handler,
     author_not_found_error_handler,
     loan_not_found_error_handler,
     duplicate_email_handler, 
-    duplicate_username_handler
+    duplicate_username_handler,
+    invalid_credentials_handler
 )
 from middlewares.logging import UUIDLoggerMiddleWare, LoggerMiddleWare
 
@@ -36,3 +38,4 @@ app.add_exception_handler(AuthorNotFoundError, author_not_found_error_handler)
 app.add_exception_handler(AuthorNotFoundError, author_not_found_error_handler)
 app.add_exception_handler(DuplicateUsernameError, duplicate_username_handler)
 app.add_exception_handler(DuplicateEmailError, duplicate_email_handler)
+app.add_exception_handler(InvalidCredentialsError, invalid_credentials_handler)

@@ -17,3 +17,6 @@ class DuplicateUsernameError(Exception):
 class DuplicateEmailError(Exception):
     def __init__(self, email: str):
         self.email = email
+
+class InvalidCredentialsError(Exception):
+    pass
