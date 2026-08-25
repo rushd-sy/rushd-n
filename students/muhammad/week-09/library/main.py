@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from routers.authors_routers import router as authors_router
 from routers.books_routers import router as books_router
@@ -31,6 +32,19 @@ app.include_router(auth_router)
 
 app.add_middleware(UUIDLoggerMiddleWare)
 app.add_middleware(LoggerMiddleWare)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins= [
+        "http://localhost.tiangolo.com",
+        "https://localhost.tiangolo.com",
+        "http://localhost",
+        "http://localhost:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 app.add_exception_handler(BookNotFoundError, book_not_found_error_handler)
 app.add_exception_handler(LoanNotFoundError, loan_not_found_error_handler)
@@ -39,3 +53,5 @@ app.add_exception_handler(AuthorNotFoundError, author_not_found_error_handler)
 app.add_exception_handler(DuplicateUsernameError, duplicate_username_handler)
 app.add_exception_handler(DuplicateEmailError, duplicate_email_handler)
 app.add_exception_handler(InvalidCredentialsError, invalid_credentials_handler)
+
+
