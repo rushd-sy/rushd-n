@@ -49,9 +49,6 @@ app.add_middleware(
 app.add_exception_handler(BookNotFoundError, book_not_found_error_handler)
 app.add_exception_handler(LoanNotFoundError, loan_not_found_error_handler)
 app.add_exception_handler(AuthorNotFoundError, author_not_found_error_handler)
-app.add_exception_handler(AuthorNotFoundError, author_not_found_error_handler)
 app.add_exception_handler(DuplicateUsernameError, duplicate_username_handler)
 app.add_exception_handler(DuplicateEmailError, duplicate_email_handler)
 app.add_exception_handler(InvalidCredentialsError, invalid_credentials_handler)
-
-
