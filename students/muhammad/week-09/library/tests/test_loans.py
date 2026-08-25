@@ -4,6 +4,7 @@ from datetime import date
 import json 
 
 from main import app
+from utils.security import create_access_token
 
 @pytest.fixture
 def temp_loans_db(tmp_path, monkeypatch):
@@ -49,6 +50,10 @@ def temp_loans_db(tmp_path, monkeypatch):
 def client(temp_loans_db):
     with TestClient(app) as c:
         yield c
+
+@pytest.fixture
+def auth_token():
+    return create_access_token({"sub": "123"})
 
 def test_get_loans(client):
     response = client.get("/loans")
@@ -104,47 +109,63 @@ def test_get_loan_by_id_not_found(client, loan_id, expected_statur_code):
     response = client.get(f"/loans/{loan_id}")
     assert response.status_code == expected_statur_code
 
-def test_create_loan(client):
+def test_create_loan(client, auth_token):
     new_loan = {
         "book_id": 2,
         "loan_date": date.today().isoformat(),
         "name" : "Bitar",
     }
 
-    response = client.post("/loans", headers={'x-user-id':'123'}, json=new_loan)
+    response = client.post("/loans",
+        headers={"Authorization": f"Bearer {auth_token}"},
+        json=new_loan
+    )
     assert response.status_code == 200
     assert response.json()['loan_id'] == 5
     assert response.json()['book_id'] == new_loan["book_id"]
 
-def test_create_loan_fails_with_invalid_data(client):
+def test_create_loan_fails_with_invalid_data(client, auth_token):
     invalid_loan = {
         "title": "Invalid loan",
         "author" : "Bitar",
         "genre" : "Sci-Fi"
     }
-    response = client.post("/loans", headers={'x-user-id':'123'}, json=invalid_loan)
+    response = client.post("/loans",
+        headers={"Authorization": f"Bearer {auth_token}"},
+        json=invalid_loan
+    )
     assert response.status_code == 422
 
 
-def test_delete_loan(client):
-        response = client.delete("/loans/1", headers={'x-user-id':'123'})
+def test_delete_loan(client, auth_token):
+        response = client.delete(
+            "/loans/1",
+            headers={"Authorization": f"Bearer {auth_token}"},
+        )
         assert response.status_code == 200
         response = client.get("/loans/1")
         assert response.status_code == 404        
         
-def test_delete_loan_not_found(client):
-    response = client.delete("/loans/200", headers={'x-user-id':'123'})
+def test_delete_loan_not_found(client, auth_token):
+    response = client.delete(
+        "/loans/200",
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
     assert response.status_code == 404
     assert response.json()['details'] == "Loan with id 200 doesn't exist"
 
-def test_update_loan(client):
+def test_update_loan(client, auth_token):
     updated_loan =     {
         "book_id": 5,
         "loan_date": date.today().isoformat(),
         "name" : "Amjad",
     }
 
-    response = client.put("/loans/1", headers={'x-user-id':'123'}, json=updated_loan)
+    response = client.put(
+        "/loans/1",
+        headers={"Authorization": f"Bearer {auth_token}"},
+        json=updated_loan
+    )
     assert response.status_code == 200
     response = client.get('/loans/1')
     assert response.status_code == 200

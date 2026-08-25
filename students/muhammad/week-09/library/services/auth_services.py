@@ -1,8 +1,9 @@
+from models.token_models import TokenResponse
 from models.users_models import UserResponse, UserCreate, User, UserLogin
 from utils.users_store import users
 from exceptions import DuplicateEmailError, DuplicateUsernameError, InvalidCredentialsError
 from middlewares.logging import logger
-from utils.security import get_password_hash, verify_password
+from utils.security import get_password_hash, verify_password, create_access_token
 
 class AuthServices:
     
@@ -27,7 +28,7 @@ class AuthServices:
 """)
         return UserResponse(**new_user.model_dump())
 
-    async def login_user(self, user_login: UserLogin):
+    async def login_user(self, user_login: UserLogin) -> TokenResponse:
         user = next(
             (user for user in users if user.username == user_login.username),
             None
@@ -38,4 +39,11 @@ class AuthServices:
             raise InvalidCredentialsError
         if not verify_password(user_login.password, user.password):
             raise InvalidCredentialsError
-        return UserResponse(**user.model_dump())
+        access_token = create_access_token(
+            data={"sub": str(user.user_id)}
+        )
+
+        return TokenResponse (
+            access_token= access_token,
+            token_type= "bearer"
+        )
