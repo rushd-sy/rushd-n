@@ -5,6 +5,7 @@ import jwt
 
 from exceptions import InvalidCredentialsError
 from config import settings
+from utils.users_store import users
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -18,14 +19,21 @@ async def get_pagination_params(limit: int = 20, offset: int = 0):
     return {"limit" : limit, "offset" : offset}
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
-
     try: 
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
     except InvalidTokenError:
         raise InvalidCredentialsError
     
-    user_id = payload.get("sub")
-    if user_id is None:
+    cur_user_id = payload.get("sub")
+    if cur_user_id is None:
         raise InvalidCredentialsError
-    
-    return user_id
+
+    try:
+        cur_user_id = int(cur_user_id)
+    except (TypeError, ValueError):
+        raise InvalidCredentialsError
+
+    if cur_user_id not in [user.user_id for user in users]:
+        raise InvalidCredentialsError
+        
+    return cur_user_id

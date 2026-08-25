@@ -5,6 +5,9 @@ import json
 
 from main import app
 from utils.security import create_access_token
+from utils.security import get_password_hash
+from utils.users_store import users
+from models.users_models import User
 
 @pytest.fixture
 def temp_books_db(tmp_path, monkeypatch):
@@ -40,10 +43,25 @@ def client(temp_books_db):
     with TestClient(app) as c:
         yield c
 
+@pytest.fixture
+def test_user():
+    user = User(
+        user_id=1,
+        username="testuser",
+        full_name="Test User",
+        email="test@example.com",
+        password=get_password_hash("password123")
+    )
+
+    users.clear()
+    users.append(user)
+
+    return user
+
 
 @pytest.fixture
-def auth_token():
-    return create_access_token({"sub": "123"})
+def auth_token(test_user):
+    return create_access_token({"sub": "1"})
 
 def test_get_books(client):
     response = client.get("/books")
