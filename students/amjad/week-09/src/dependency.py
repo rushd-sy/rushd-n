@@ -5,10 +5,13 @@ from typing import Annotated
 
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import EmailStr
-from models import LoginData, LoginData, PageParams, TokenData, TokenData, UserOut
+from models import LoginData, PageParams, TokenData
 import jwt
 from fastapi import HTTPException
 from storage import load_users
+from dotenv import load_dotenv
+
+load_dotenv()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -31,8 +34,8 @@ def decode_access_token(token: str) -> TokenData:
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
     
-async def get_current_user(self, token: str) -> int:
-    payload = self.decode_access_token(token)
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> int:
+    payload = decode_access_token(token)
     user_id = payload.user_id
     if user_id is None:
         raise HTTPException(status_code=401, detail="Invalid token")
