@@ -41,6 +41,8 @@ class UserService:
     async def create_user(self, user_create: UserCreate) -> UserOut:
         users = await load_users()
         new_user_id = max([user.user_id for user in users], default=0) + 1
+        if any(user.email == user_create.email for user in users):
+            raise HTTPException(status_code=400, detail="Email already registered")
         new_user = User(
             user_id=new_user_id,
             name=user_create.name,
