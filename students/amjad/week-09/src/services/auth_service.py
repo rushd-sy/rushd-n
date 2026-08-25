@@ -1,5 +1,6 @@
 from fastapi import HTTPException
-from models import LoginData, TokenData, UserOut, UserCreate, User, Token
+from fastapi.security import OAuth2PasswordRequestForm
+from models import  TokenData, UserOut, UserCreate, User, Token
 from storage import load_users, save_users
 from pwdlib import PasswordHash
 from datetime import datetime, timedelta, timezone
@@ -27,8 +28,8 @@ class UserService:
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return Token(access_token=encoded_jwt)
 
-    async def login(self, login_data: LoginData) -> Token:
-        email, password = login_data.email, login_data.password
+    async def login(self, login_data: OAuth2PasswordRequestForm) -> Token:
+        email, password = login_data.username, login_data.password
         users = await load_users()
         for user in users:
             if user.email == email and self.verify_password(password, user.password):

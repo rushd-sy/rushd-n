@@ -101,9 +101,6 @@ class UserOut(BaseModel):
     name: str
     email: EmailStr
 
-class LoginData(BaseModel):
-    email: EmailStr
-    password: str
 
 class Token(BaseModel):
     access_token: str
