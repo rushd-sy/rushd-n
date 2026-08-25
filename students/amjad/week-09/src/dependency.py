@@ -1,11 +1,10 @@
 import os
 
-from fastapi import Depends, Header, Query
+from fastapi import Depends, Query
 from typing import Annotated
 
 from fastapi.security import OAuth2PasswordBearer
-from pydantic import EmailStr
-from models import LoginData, PageParams, TokenData
+from models import  PageParams, TokenData
 import jwt
 from fastapi import HTTPException
 from storage import load_users
@@ -45,12 +44,6 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> int
             return user_id
     raise HTTPException(status_code=404, detail="User not found")
 
-
-async def login_info(
-    email: Annotated[EmailStr, Header()],
-    password: Annotated[str, Header()],
-) -> LoginData:
-    return LoginData(email=email, password=password)
 
 CommonsDepForPagination = Annotated[PageParams, Depends(get_pagination_params)]
 CurrentUserDep = Annotated[int, Depends(get_current_user)]
