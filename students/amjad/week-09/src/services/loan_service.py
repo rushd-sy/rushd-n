@@ -34,7 +34,7 @@ class LoanService:
         new_loan = Loan(
             loan_id=max([stored_loan.loan_id for stored_loan in loans], default=0) + 1,
             book_id=loan.book_id,
-            user_id=loan.user_id,
+            user_id=user_id,
             loan_date=loan_date,
             return_date=loan.return_date.isoformat(),
         )
@@ -77,7 +77,7 @@ class LoanService:
                 updated_loan = Loan(
                     loan_id=loan_id,
                     book_id=loan.book_id,
-                    user_id=loan.user_id,
+                    user_id=user_id,
                     loan_date=l.loan_date,
                     return_date=loan.return_date.isoformat(),
                 )
