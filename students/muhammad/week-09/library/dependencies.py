@@ -1,6 +1,10 @@
 from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
-from jwt import InvalidTokenError
+from jwt.exceptions import (
+    InvalidTokenError,
+    ExpiredSignatureError,
+    InvalidSignatureError
+    )
 import jwt
 
 from exceptions import InvalidCredentialsError
@@ -21,13 +25,16 @@ async def get_pagination_params(limit: int = 20, offset: int = 0) -> dict[str, i
 async def get_current_user_id(token: str = Depends(oauth2_scheme)) -> int:
     try: 
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    except ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Sessison expired, login again")
+    except InvalidSignatureError:
+        raise HTTPException(status_code=401, detail="Token signature verification failed")
     except InvalidTokenError:
         raise InvalidCredentialsError
     
     cur_user_id = payload.get("id")
     if cur_user_id is None:
         raise InvalidCredentialsError
-
     try:
         cur_user_id = int(cur_user_id)
     except (TypeError, ValueError):
