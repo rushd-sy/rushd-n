@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends
 
-from models.users_models import UserCreate, UserLogin, UserResponse
+from models.users_models import UserCreate, UserLogin
 from models.token_models import TokenResponse
 from services.auth_services import AuthServices
 
@@ -14,7 +14,7 @@ async def register_user(
             AuthServices,
             Depends(AuthServices)
         ]
-    ) -> UserResponse:
+    ) -> TokenResponse:
     return await auth_services.register_user(user_create=user_create)
 
 @router.post("/login")

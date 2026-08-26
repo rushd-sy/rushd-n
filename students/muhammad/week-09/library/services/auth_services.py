@@ -1,13 +1,12 @@
 from models.token_models import TokenResponse
-from models.users_models import UserResponse, UserCreate, User, UserLogin
+from models.users_models import UserCreate, User, UserLogin
 from utils.users_store import users
 from exceptions import DuplicateEmailError, DuplicateUsernameError, InvalidCredentialsError
-from middlewares.logging import logger
 from utils.security import get_password_hash, verify_password, create_access_token
 
 class AuthServices:
     
-    async def register_user(self, user_create: UserCreate) -> UserResponse:
+    async def register_user(self, user_create: UserCreate) -> TokenResponse:
         if user_create.username in [user.username for user in users]:
             raise DuplicateUsernameError(user_create.username)
         if user_create.email in [user.email for user in users]:
@@ -21,12 +20,14 @@ class AuthServices:
             user_id=new_id
         )
         users.append(new_user)
-        logger.info(f"""User with the following information successfully added:
-        username: {new_user.username}
-        id: {new_user.user_id}
-        email: {new_user.email}
-""")
-        return UserResponse(**new_user.model_dump())
+        
+        access_token = create_access_token(
+            data={"id": str(new_user.user_id)}
+        )
+        return TokenResponse (
+            access_token= access_token,
+            token_type= "bearer"
+        )
 
     async def login_user(self, user_login: UserLogin) -> TokenResponse:
         user = next(
@@ -40,7 +41,7 @@ class AuthServices:
         if not verify_password(user_login.password, user.password):
             raise InvalidCredentialsError
         access_token = create_access_token(
-            data={"sub": str(user.user_id)}
+            data={"id": str(user.user_id)}
         )
 
         return TokenResponse (

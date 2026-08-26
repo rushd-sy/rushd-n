@@ -4,7 +4,7 @@ import asyncio
 
 from models.page_models import Page
 from models.books_models import BookResponse, BookCreate
-from dependencies import get_pagination_params, get_current_user
+from dependencies import get_pagination_params, get_current_user_id
 from services.book_services import BookServices
 from middlewares.logging import logger
 
@@ -15,6 +15,7 @@ router = APIRouter(prefix="/books")
 async def get_books(
         pagination_params: Annotated[dict, Depends(get_pagination_params)],
         book_service: Annotated[BookServices, Depends(BookServices)],
+        user_id: Annotated[str, Depends(get_current_user_id)],
         author : str | None = None,
         genre : str | None = None,
         min_publish_year : int | None = None,
@@ -36,7 +37,8 @@ async def get_books(
 @router.get("/{book_id}", response_model=BookResponse)
 async def get_book(
         book_id: Annotated[int, Path(gt=0)],
-        book_service: Annotated[BookServices, Depends(BookServices)]
+        book_service: Annotated[BookServices, Depends(BookServices)],
+        user_id: Annotated[str, Depends(get_current_user_id)],
     ) -> BookResponse:
     return await book_service.get_book_by_id(book_id=book_id)
 
@@ -50,7 +52,7 @@ async def create_book(
         request_book: BookCreate,
         book_service: Annotated[BookServices, Depends(BookServices)],
         background_tasks: BackgroundTasks,
-        user_id: Annotated[str, Depends(get_current_user)],
+        user_id: Annotated[str, Depends(get_current_user_id)],
     ) -> BookResponse:
     response = await book_service.create_book(request_book)
     background_tasks.add_task(write_notification)
@@ -61,7 +63,7 @@ async def update_book(
         book_id: Annotated[int, Path(gt=0)], 
         request_book: BookCreate,
         book_service: Annotated[BookServices, Depends(BookServices)],
-        user_id: Annotated[str, Depends(get_current_user)],
+        user_id: Annotated[str, Depends(get_current_user_id)],
     ) -> BookResponse:
 
     return await book_service.update_book(book_id, request_book)
@@ -70,6 +72,6 @@ async def update_book(
 async def delete_book(
         book_id: Annotated[int, Path(gt=0)],
         book_service: Annotated[BookServices, Depends(BookServices)],
-        user_id: Annotated[str, Depends(get_current_user)],
+        user_id: Annotated[str, Depends(get_current_user_id)],
     ) -> BookResponse:
     return await book_service.delete_book(book_id)

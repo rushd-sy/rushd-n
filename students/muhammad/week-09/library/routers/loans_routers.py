@@ -4,7 +4,7 @@ from models.loans_models import LoanResponse, LoanCreate
 from datetime import date
 
 from models.page_models import Page
-from dependencies import get_pagination_params, get_current_user
+from dependencies import get_pagination_params, get_current_user_id
 from services.loan_services import LoanServices
 router = APIRouter(prefix="/loans")
 
@@ -13,6 +13,7 @@ router = APIRouter(prefix="/loans")
 async def get_loans(
     loan_services: Annotated[LoanServices, Depends(LoanServices)],
     pagination_params: Annotated[dict, Depends(get_pagination_params)],
+    user_id: Annotated[str, Depends(get_current_user_id)],
     name: str | None = None,
     loan_date: date | None = None,
     min_date: date | None = None,
@@ -34,6 +35,7 @@ async def get_loans(
 async def get_loan(
         loan_services: Annotated[LoanServices, Depends(LoanServices)],
         loan_id: Annotated[int, Path(gt=0)],
+        user_id: Annotated[str, Depends(get_current_user_id)],
     ):
     return await loan_services.get_loan_by_id(loan_id)
 
@@ -41,7 +43,7 @@ async def get_loan(
 async def create_loan(
         loan_services: Annotated[LoanServices, Depends(LoanServices)],
         request_loan: LoanCreate,
-        user_id: Annotated[str, Depends(get_current_user)],
+        user_id: Annotated[str, Depends(get_current_user_id)],
     ):
     return await loan_services.create_loan(request_loan)
 
@@ -51,7 +53,7 @@ async def update_loan(
         loan_services: Annotated[LoanServices, Depends(LoanServices)],
         loan_id: Annotated[int, Path(gt=0)],
         request_loan: LoanCreate,
-        user_id: Annotated[str, Depends(get_current_user)],
+        user_id: Annotated[str, Depends(get_current_user_id)],
     ):
     return await loan_services.update_loan(loan_id, request_loan)
 
@@ -61,6 +63,6 @@ async def update_loan(
 async def delete_loan(
         loan_services: Annotated[LoanServices, Depends(LoanServices)],
         loan_id: Annotated[int, Path(gt=0)],
-        user_id: Annotated[str, Depends(get_current_user)],
+        user_id: Annotated[str, Depends(get_current_user_id)],
     ) -> LoanResponse:
     return await loan_services.delete_loan(loan_id)

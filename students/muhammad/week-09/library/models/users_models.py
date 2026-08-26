@@ -28,11 +28,6 @@ class UserCreate(BaseModel):
             raise ValueError("Email must contain '@' and be at least 3 characters")        
         return v
 
-class UserResponse(BaseModel):
-    username: str
-    full_name: str
-    user_id: int = Field(gt=0)
-
 class UserLogin(BaseModel):
     username: str
     password: str

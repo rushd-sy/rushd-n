@@ -61,7 +61,7 @@ def test_user():
 
 @pytest.fixture
 def auth_token(test_user):
-    return create_access_token({"sub": "1"})
+    return create_access_token({"id": "1"})
 
 def test_get_books(client):
     response = client.get("/books")

@@ -3,7 +3,7 @@ from typing import Annotated
 
 from models.authors_models import AuthorResponse, AuthorCreate
 from models.page_models import Page
-from dependencies import get_pagination_params, get_current_user
+from dependencies import get_pagination_params, get_current_user_id
 from services.author_services import AuthorServices
 
 router = APIRouter(prefix="/authors")
@@ -13,6 +13,7 @@ router = APIRouter(prefix="/authors")
 async def get_authors(
     author_services: Annotated[AuthorServices, Depends(AuthorServices)],
     pagination_params: Annotated[dict, Depends(get_pagination_params)],
+    user_id: Annotated[str, Depends(get_current_user_id)],
     name: str | None = None,
     min_birth_year: int | None = None,
     max_birth_year: int | None = None,
@@ -31,6 +32,7 @@ async def get_authors(
 async def get_author(
     author_services: Annotated[AuthorServices, Depends(AuthorServices)],
     author_id: Annotated[int, Path(gt=0)],
+    user_id: Annotated[str, Depends(get_current_user_id)],
 ) -> AuthorResponse:
     return await author_services.get_author_by_id(author_id)
 
@@ -39,7 +41,7 @@ async def get_author(
 async def create_author(
         author_services: Annotated[AuthorServices, Depends(AuthorServices)],
         request_author: AuthorCreate,
-        user_id: Annotated[str, Depends(get_current_user)],
+        user_id: Annotated[str, Depends(get_current_user_id)],
     ) -> AuthorResponse:
     return await author_services.create_author(request_author)
 
@@ -49,7 +51,7 @@ async def update_author(
         author_services: Annotated[AuthorServices, Depends(AuthorServices)],
         author_id: Annotated[int, Path(gt=0)],
         request_author: AuthorCreate,
-        user_id: Annotated[str, Depends(get_current_user)],
+        user_id: Annotated[str, Depends(get_current_user_id)],
     ) -> AuthorResponse:
     return await author_services.update_author(
         author_id,
@@ -61,7 +63,7 @@ async def update_author(
 async def delete_author(
     author_services: Annotated[AuthorServices, Depends(AuthorServices)],
     author_id: Annotated[int, Path(gt=0)],
-    user_id: Annotated[str, Depends(get_current_user)]
+    user_id: Annotated[str, Depends(get_current_user_id)]
 ) -> AuthorResponse:
 
     return await author_services.delete_author(author_id)
