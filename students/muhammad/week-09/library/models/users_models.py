@@ -31,3 +31,10 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     username: str
     password: str
+    
+    @field_validator("username")
+    @staticmethod
+    def check_username(cls, v: str) -> str:  # type: ignore
+        if not v.isalnum():
+            raise ValueError("Username must not contain spaces or special characters")        
+        return v
