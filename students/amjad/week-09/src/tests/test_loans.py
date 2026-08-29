@@ -76,3 +76,18 @@ def test_get_loan(client, auth_headers):
     assert get_response.status_code == 200
     get_data = get_response.json()
     assert get_data["loan_id"] == loan_id
+
+def test_auth_user_isnt_the_same_as_loan_user(client, auth_headers):
+    response = client.post(
+        "/loans",
+        json={"book_id": 1, "user_id": 2, "return_date": "2026-08-30"},
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+    data = response.json()
+    loan_id = data["loan_id"]
+
+    get_response = client.get(f"/loans/{loan_id}", headers=auth_headers)
+    assert get_response.status_code == 200
+    get_data = get_response.json()
+    assert get_data["user_id"] == 1
