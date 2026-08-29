@@ -4,10 +4,7 @@ from datetime import date
 import json
 
 from main import app
-from utils.security import create_access_token
-from utils.security import get_password_hash
 from utils.users_store import users
-from models.users_models import User
 
 @pytest.fixture
 def temp_books_db(tmp_path, monkeypatch):
@@ -44,27 +41,28 @@ def client(temp_books_db):
         yield c
 
 @pytest.fixture
-def test_user():
-    user = User(
-        user_id=1,
-        username="testuser",
-        full_name="Test User",
-        email="test@example.com",
-        password=get_password_hash("password123")
-    )
-
-    users.clear()
-    users.append(user)
-
-    return user
-
+def register_user():
+    with TestClient(app) as client:
+        user = {
+            "username": "testuser",
+            "full_name": "Test User",
+            "email": "test@example.com",
+            "password": "password123"
+        }
+        users.clear()
+        response = client.post("/auth/register", json=user)
+        yield response.json()
 
 @pytest.fixture
-def auth_token(test_user):
-    return create_access_token({"id": "1"})
+def access_token(register_user):
+    yield register_user['access_token']
 
-def test_get_books(client):
-    response = client.get("/books")
+
+def test_get_books(client, access_token):
+    response = client.get(
+        "/books",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
     
     assert response.status_code == 200
     items = response.json()['items']
@@ -73,15 +71,21 @@ def test_get_books(client):
     assert items[0]['author'] == 'Bitar'
     assert items[1]['publish_year'] == 1999
 
-def test_get_books_does_not_return_creation_date(client):
-    response = client.get("/books")
+def test_get_books_does_not_return_creation_date(client, access_token):
+    response = client.get(
+        "/books",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
     assert response.status_code == 200
     for book in response.json()['items']:
         assert "creation_date" not in book
     assert response.json()['items'] 
 
-def test_get_book_by_id(client):
-    response = client.get("/books/1")
+def test_get_book_by_id(client, access_token):
+    response = client.get(
+        "/books/1",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
     assert response.status_code == 200
     item = response.json()  
     assert item['book_id'] == 1
@@ -98,11 +102,14 @@ def test_get_book_by_id(client):
         ("az", 422)
     ]
 )
-def test_get_book_by_id_not_found(client, book_id, expected_status_code):
-    response = client.get(f"/books/{book_id}")
+def test_get_book_by_id_not_found(client, access_token, book_id, expected_status_code):
+    response = client.get(
+        f"/books/{book_id}", 
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
     assert response.status_code == expected_status_code
 
-def test_create_book(client, auth_token):
+def test_create_book(client, access_token):
     new_book = {
         "title": "Third Book",
         "author" : "Bitar",
@@ -110,7 +117,7 @@ def test_create_book(client, auth_token):
         "publish_year": 2025
     }
     response = client.post("/books", 
-        headers={"Authorization": f"Bearer {auth_token}"},
+        headers={"Authorization": f"Bearer {access_token}"},
         json=new_book
     )
     assert 1 == 1
@@ -118,35 +125,38 @@ def test_create_book(client, auth_token):
     assert response.json()['book_id'] == 3
     assert response.json()['title'] == new_book['title']
 
-def test_create_book_fails_with_invalid_data(client, auth_token) -> None:
+def test_create_book_fails_with_invalid_data(client, access_token) -> None:
     invalid_book = {
         "title": "Invalid Book",
         "author" : "Bitar",
         "genre" : "Sci-Fi"
     }
     response = client.post("/books",
-        headers={"Authorization": f"Bearer {auth_token}"},
+        headers={"Authorization": f"Bearer {access_token}"},
         json=invalid_book
     )
     assert response.status_code == 422
 
-def test_delete_book(client, auth_token):
+def test_delete_book(client, access_token):
     response = client.delete("/books/1", 
-        headers={"Authorization": f"Bearer {auth_token}"},
+        headers={"Authorization": f"Bearer {access_token}"},
     )
     assert response.status_code == 200
     
-    response = client.get("/books/1")
+    response = client.get(
+        "/books/1",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
     assert response.status_code == 404
 
-def test_delete_book_not_found(client, auth_token):
+def test_delete_book_not_found(client, access_token):
     response = client.delete("/books/4", 
-        headers={"Authorization": f"Bearer {auth_token}"},
+        headers={"Authorization": f"Bearer {access_token}"},
     )
     assert response.status_code == 404
     assert response.json()['details'] == "Book with id 4 doesn't exist"
 
-def test_update_book(client, auth_token):
+def test_update_book(client, access_token):
     updated_book_request = {
         "title": "Updated Book",
         "author" : "Bitar",
@@ -154,12 +164,15 @@ def test_update_book(client, auth_token):
         "publish_year": 2025
     }
     response = client.put("/books/1",
-        headers={"Authorization": f"Bearer {auth_token}"},
+        headers={"Authorization": f"Bearer {access_token}"},
         json=updated_book_request
     )
     assert response.status_code == 200
     
-    updated_book_response = client.get("books/1").json()
+    updated_book_response = client.get(
+        "books/1", 
+        headers={"Authorization": f"Bearer {access_token}"}
+    ).json()
     assert updated_book_request['title'] == updated_book_response['title']
     assert updated_book_request['author'] == updated_book_response['author']
     assert updated_book_request['genre'] == updated_book_response['genre']

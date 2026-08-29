@@ -3,11 +3,8 @@ from fastapi.testclient import TestClient
 from datetime import date
 import json
 
-from main import app
-from utils.security import create_access_token
-from utils.security import get_password_hash
+from main import app  
 from utils.users_store import users
-from models.users_models import User
 
 @pytest.fixture
 def temp_authors_db(tmp_path, monkeypatch):
@@ -41,25 +38,27 @@ def client(temp_authors_db):
         yield c
 
 @pytest.fixture
-def test_user():
-    user = User (
-        user_id=1,
-        username="testuser",
-        full_name="Test User",
-        email="test@example.com",
-        password=get_password_hash("password123")
-    )
-    users.clear()
-    users.append(user)
-    
-    return user
+def register_user():
+    with TestClient(app) as client:
+        user = {
+            "username": "testuser",
+            "full_name": "Test User",
+            "email": "test@example.com",
+            "password": "password123"
+        }
+        users.clear()
+        response = client.post("/auth/register", json=user)
+        yield response.json()
 
 @pytest.fixture
-def auth_token(test_user):
-    return create_access_token({"id": "1"})
+def access_token(register_user):
+    yield register_user['access_token']
 
-def test_get_authors(client):
-    response = client.get("/authors")
+def test_get_authors(client, access_token):
+    response = client.get(
+        "/authors",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
     assert response.status_code == 200
     items = response.json()['items']
     assert items[0]['author_id'] == 1
@@ -67,15 +66,21 @@ def test_get_authors(client):
     assert items[0]['name'] == 'Bitar'
     assert items[1]['name'] == 'Bakro'
 
-def test_get_authors_does_not_return_creation_date(client):
-    response = client.get("/authors")
+def test_get_authors_does_not_return_creation_date(client, access_token):
+    response = client.get(
+        "/authors",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
     assert response.status_code == 200
     for author in response.json()['items']:
         assert "creation_date" not in author
 
 
-def test_get_author_by_id(client):
-    response = client.get("/authors/1")
+def test_get_author_by_id(client, access_token):
+    response = client.get(
+        "/authors/1",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
     assert response.status_code == 200
     items = response.json()
     assert items['author_id'] == 1
@@ -91,63 +96,72 @@ def test_get_author_by_id(client):
         (100, 404),
     )
 )
-def test_get_author_by_id_not_found(client, author_id, expected_status_code):
-    response = client.get(f"/authors/{author_id}")
+def test_get_author_by_id_not_found(client, access_token, author_id, expected_status_code):
+    response = client.get(
+        f"/authors/{author_id}",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
     assert response.status_code == expected_status_code
 
-def test_create_author(client, auth_token):
+def test_create_author(client, access_token):
     new_author =     {    
         "name": "Ahmad",
         "birth_year": 20010,
         "added_at": 2020,
     }
     response = client.post("/authors",
-        headers={"Authorization": f"Bearer {auth_token}"},
+        headers={"Authorization": f"Bearer {access_token}"},
         json=new_author
     )
     assert response.status_code == 200
     assert response.json()['author_id'] == 3
     assert response.json()['name'] == new_author["name"]
 
-def test_create_author_fails_with_invalid_data(client, auth_token):
+def test_create_author_fails_with_invalid_data(client, access_token):
     invalid_author = {
         "title": "Invalid author",
         "author" : "Bitar",
         "genre" : "Sci-Fi"
     }
     response = client.post("/authors", 
-        headers={"Authorization": f"Bearer {auth_token}"},
+        headers={"Authorization": f"Bearer {access_token}"},
         json=invalid_author
     )
     assert response.status_code == 422
 
 
-def test_delete_author(client, auth_token):
+def test_delete_author(client, access_token):
     response = client.delete("/authors/1", 
-        headers={"Authorization": f"Bearer {auth_token}"}
+        headers={"Authorization": f"Bearer {access_token}"}
     )
     assert response.status_code == 200
-    response = client.get("authors/1")
+    response = client.get(
+        "authors/1", 
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
     assert response.status_code == 404
 
-def test_delete_author_not_found(client, auth_token):
+def test_delete_author_not_found(client, access_token):
         response = client.delete("/authors/4",
-            headers={"Authorization": f"Bearer {auth_token}"}
+            headers={"Authorization": f"Bearer {access_token}"}
         )
         assert response.status_code == 404
         assert response.json()['details'] == "Author with id 4 doesn't exist"
 
-def test_update_author(client, auth_token):
+def test_update_author(client, access_token):
     updated_author = {    
         "name": "Muhammad Bitar",
         "birth_year": 2005
     }
     response = client.put("/authors/1",
-        headers={"Authorization": f"Bearer {auth_token}"}, 
+        headers={"Authorization": f"Bearer {access_token}"}, 
         json=updated_author
     )
     assert response.status_code == 200
-    response = client.get("authors/1")
+    response = client.get(
+        "authors/1", 
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
     assert response.status_code == 200
     updated_author_in_list = response.json()
     assert updated_author_in_list["name"] == updated_author["name"]
