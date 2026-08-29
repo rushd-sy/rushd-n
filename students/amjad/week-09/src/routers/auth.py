@@ -1,8 +1,8 @@
-from fastapi import Depends, APIRouter
+from fastapi import Depends, APIRouter, Path
 from typing import Annotated
 
 from fastapi.security import OAuth2PasswordRequestForm
-
+from dependency import CurrentUserDep
 
 from models import UserCreate, UserOut, Token
 from services.auth_service import UserService
@@ -35,3 +35,15 @@ async def register(
     - Returns the newly created user's details.
     """
     return await service.create_user(user_create)
+
+@router.delete("/users/{user_id}", response_model=UserOut)
+async def delete_user(
+    user_id: CurrentUserDep,
+    service: UserService = Depends(UserService),
+) -> UserOut:
+    """
+    Delete a user by their ID.
+    - **user_id**: The ID of the user to be deleted.
+    - Returns the details of the deleted user if successful, otherwise raises a 404 error.
+    """
+    return await service.delete_User(user_id)

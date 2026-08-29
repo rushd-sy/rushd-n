@@ -1,9 +1,12 @@
-from fastapi import HTTPException
+from typing_extensions import Annotated
+
+from fastapi import HTTPException, Path
 from fastapi.security import OAuth2PasswordRequestForm
 from models import  TokenData, UserOut, UserCreate, User, Token
 from storage import load_users, save_users
 from pwdlib import PasswordHash
 from datetime import datetime, timedelta, timezone
+from dependency import CurrentUserDep
 import jwt
 import os
 
@@ -53,4 +56,17 @@ class UserService:
         users.append(new_user)
         await save_users(users)
         return UserOut(**new_user.model_dump())
-    
+
+    async def delete_User(
+        self, user_id: CurrentUserDep
+    ) -> UserOut:
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="unauthorized")
+        users = await load_users()
+        for i, user in enumerate(users):
+            if user.user_id == user_id:
+                deleted_user = UserOut(**users[i].model_dump())
+                users.pop(i)
+                await save_users(users)
+                return deleted_user
+        raise HTTPException(status_code=404, detail="User not found")
