@@ -26,7 +26,7 @@ async def get_current_user_id(token: str = Depends(oauth2_scheme)) -> int:
     try: 
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
     except ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Sessison expired, login again")
+        raise HTTPException(status_code=401, detail="Session expired, login again")
     except InvalidSignatureError:
         raise HTTPException(status_code=401, detail="Token signature verification failed")
     except InvalidTokenError:

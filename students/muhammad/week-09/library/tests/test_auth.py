@@ -6,6 +6,11 @@ from utils.users_store import users
 client = TestClient(app)
 
 @pytest.fixture
+def modify_expires_delta(monkeypatch):
+    monkeypatch.setattr("config.settings.ACCESS_TOKEN_EXPIRE_MINUTES", 0)
+
+
+@pytest.fixture
 def clear_db():
     users.clear()
     return users
@@ -244,3 +249,30 @@ def test_login_fails_with_invalid_username(clear_db):
     
     assert response.status_code == 422
     assert "username" in response.text.lower()
+
+def test_expired_jwt_fails(clear_db, modify_expires_delta):
+    # assert int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES")) == 0 # type: ignore
+    user = {
+        "username": "TestUser1",
+        "full_name": "Test User",
+        "email": "test1@example.com",
+        "password": "password123"
+    }
+    
+    response = client.post(
+        "auth/register",
+        json=user
+    )
+    
+    assert response.status_code == 200
+    assert "access_token" in response.json()
+    assert response.json()['token_type'] == "bearer"
+    
+    print(response.json()['access_token'])
+    get_resopnse = client.get(
+        "/books",
+        headers={"Authorization": f"Bearer {response.json()['access_token']}"}
+    )
+    
+    assert get_resopnse.status_code == 401
+    assert "session expired" in get_resopnse.json()['detail'].lower()
