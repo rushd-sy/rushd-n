@@ -9,6 +9,7 @@ import jwt
 from fastapi import HTTPException
 from storage import load_users
 from dotenv import load_dotenv
+from db.database import get_db, AsyncSession
 
 load_dotenv()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -47,3 +48,4 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> int
 
 CommonsDepForPagination = Annotated[PageParams, Depends(get_pagination_params)]
 CurrentUserDep = Annotated[int, Depends(get_current_user)]
+CommonsDepForDB = Annotated[AsyncSession, Depends(get_db)]
