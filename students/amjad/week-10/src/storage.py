@@ -18,7 +18,7 @@ async def load_books() -> list[Book]:
 
 async def save_books(books: list[Book]) -> None:
     async with aiofiles.open("books.json", "w", encoding="utf-8") as f:
-        await f.write(json.dumps([book.model_dump() for book in books], indent=4))
+        await f.write(json.dumps([book.model_dump(mode="json") for book in books], indent=4))
 
 
 async def load_loans() -> list[Loan]:
@@ -36,7 +36,7 @@ async def load_loans() -> list[Loan]:
 
 async def save_loans(loans: list[Loan]) -> None:
     async with aiofiles.open("loans.json", "w", encoding="utf-8") as f:
-        await f.write(json.dumps([loan.model_dump() for loan in loans], indent=4))
+        await f.write(json.dumps([loan.model_dump(mode="json") for loan in loans], indent=4))
 
 
 async def load_authors() -> list[Author]:
@@ -54,7 +54,7 @@ async def load_authors() -> list[Author]:
 
 async def save_authors(authors: list[Author]) -> None:
     async with aiofiles.open("authors.json", "w", encoding="utf-8") as f:
-        await f.write(json.dumps([author.model_dump() for author in authors], indent=4))
+        await f.write(json.dumps([author.model_dump(mode="json") for author in authors], indent=4))
 
 async def load_users() -> list[User]:
     try:
@@ -71,4 +71,4 @@ async def load_users() -> list[User]:
 
 async def save_users(users: list[User]) -> None:
     async with aiofiles.open("users.json", "w", encoding="utf-8") as f:
-        await f.write(json.dumps([user.model_dump() for user in users], indent=4))
+        await f.write(json.dumps([user.model_dump(mode="json") for user in users], indent=4))

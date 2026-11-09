@@ -12,20 +12,20 @@ router = APIRouter()
 @router.get("/", response_model=Page[BookOut])
 async def get_books(
     commons: CommonsDepForPagination,
-    author: str | None = None,
+    author_id: int | None = None,
     genre: str | None = None,
     min_year: int | None = None,
     service: BookService = Depends(BookService),
 ) -> Page[BookOut]:
     """
     Retrieve a list of books with optional filters.
-    - **author**: Filter books by author name.
+    - **author_id**: Filter books by author ID.
     - **genre**: Filter books by genre.
     - **min_year**: Filter books published after a certain year.
     - **offset**: The number of items to skip before starting to collect the result set.
     - **limit**: The maximum number of items to return (default is 10, maximum is 20).
     """
-    return await service.list(commons, author, genre, min_year)
+    return await service.list(commons, author_id, genre, min_year)
 
 
 # `async def` because it performs an I/O operation such as reading from storage

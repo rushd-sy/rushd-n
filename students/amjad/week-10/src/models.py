@@ -19,7 +19,7 @@ class Page(BaseModel, Generic[T]):
 
 class BookCreate(BaseModel):
     title: str = Field(min_length=1)
-    author: str = Field(min_length=1)
+    author_id: int = Field(gt=0)
     genre: str = Field(min_length=1)
     year: int = Field(gt=0)
 
@@ -27,7 +27,7 @@ class BookCreate(BaseModel):
 class BookOut(BaseModel):
     book_id: int
     title: str
-    author: str
+    author_id: int
     genre: str
     year: int
     created_at: datetime
@@ -36,18 +36,18 @@ class BookOut(BaseModel):
 class Book(BaseModel):
     book_id: int
     title: str
-    author: str
+    author_id: int
     genre: str
     year: int
-    created_at: str
+    created_at: datetime
 
 
 class Loan(BaseModel):
     loan_id: int
     book_id: int
     user_id: int
-    loan_date: str
-    return_date: str
+    loan_date: datetime
+    return_date: datetime
 
 
 class LoanCreate(BaseModel):
@@ -68,7 +68,7 @@ class Author(BaseModel):
     author_id: int
     name: str
     birth_year: int
-    created_at: str
+    created_at: datetime
 
 
 class AuthorOut(BaseModel):
@@ -88,7 +88,7 @@ class User(BaseModel):
     user_id: int
     name: str
     email: EmailStr
-    created_at: str
+    created_at: datetime
     password: str
 
 class UserCreate(BaseModel):

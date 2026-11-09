@@ -26,14 +26,14 @@ class BookService:
     async def list(
         self,
         common: CommonsDepForPagination,
-        author: str | None = None,
+        author_id: int | None = None,
         genre: str | None = None,
         min_year: int | None = None,
     ) -> Page[BookOut]:
         books = await load_books()
         books_out = []
         for book in books:
-            if author and book.author != author:
+            if author_id and book.author_id != author_id:
                 continue
             if genre and book.genre != genre:
                 continue
@@ -56,10 +56,10 @@ class BookService:
         if user_id is None:
             raise HTTPException(status_code=401, detail="unauthorized")
         books = await load_books()
-        created_at = datetime.now().isoformat()
+        created_at = datetime.now()
         new_book = Book(
             book_id=max([stored_book.book_id for stored_book in books], default=0) + 1,
-            author=book.author,
+            author_id=book.author_id,
             title=book.title,
             genre=book.genre,
             year=book.year,
@@ -83,7 +83,7 @@ class BookService:
                 updated_book = Book(
                     book_id=book_id,
                     title=book.title,
-                    author=book.author,
+                    author_id=book.author_id,
                     genre=book.genre,
                     year=book.year,
                     created_at=b.created_at,

@@ -50,7 +50,7 @@ class UserService:
             user_id=new_user_id,
             name=user_create.name,
             email=user_create.email,
-            created_at=datetime.now().isoformat(),
+            created_at=datetime.now(),
             password=self.get_password_hash(user_create.password)
         )
         users.append(new_user)

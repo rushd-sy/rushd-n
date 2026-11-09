@@ -6,7 +6,7 @@ def test_create_book(client, auth_headers):
         "/books",
         json={
             "title": "mooo",
-            "author": "maaa",
+            "author_id": 1,
             "genre": "yooo",
             "year": 1925,
         },
@@ -15,7 +15,7 @@ def test_create_book(client, auth_headers):
     assert response.status_code == 200
     data = response.json()
     assert data["title"] == "mooo"
-    assert data["author"] == "maaa"
+    assert data["author_id"] == 1
     assert data["genre"] == "yooo"
     assert data["year"] == 1925
     assert "book_id" in data
@@ -26,24 +26,24 @@ def test_create_book(client, auth_headers):
     [
         {
             "title": "",
-            "author": "maaa",
+            "author_id": 1,
             "genre": "yooo",
             "year": 1925,
         },
-        {"title": "mooo", "author": "", "genre": "yooo", "year": 1925},
+        {"title": "mooo", "author_id": 0, "genre": "yooo", "year": 1925},
         {
             "title": "mooo",
-            "author": "maaa",
+            "author_id": 1,
             "genre": "",
             "year": 1925,
         },
         {
             "title": "mooo",
-            "author": "maaa",
+            "author_id": 1,
             "genre": "yooo",
             "year": -1,
         },
-        {"title": "mooo", "author": "maaa", "year": 1925},
+        {"title": "mooo", "author_id": 1, "year": 1925},
     ],
 )
 def test_create_book_invalid_input(client, invalid_input, auth_headers):
@@ -56,7 +56,7 @@ def test_update_book_not_found(client, auth_headers):
         "/books/999",
         json={
             "title": "mooo",
-            "author": "maaa",
+            "author_id": 1,
             "genre": "yooo",
             "year": 1925,
         },
@@ -71,7 +71,7 @@ def test_unauthorized_access(client):
         "/books",
         json={
             "title": "mooo",
-            "author": "maaa",
+            "author_id": 1,
             "genre": "yooo",
             "year": 1925,
         },
@@ -83,7 +83,7 @@ def test_delete_book(client, auth_headers):
         "/books",
         json={
             "title": "mooo",
-            "author": "maaa",
+            "author_id": 1,
             "genre": "yooo",
             "year": 1925,
         },
@@ -97,7 +97,7 @@ def test_delete_book(client, auth_headers):
     data = response.json()
     assert data["book_id"] == book_id
     assert data["title"] == "mooo"
-    assert data["author"] == "maaa"
+    assert data["author_id"] == 1
     assert data["genre"] == "yooo"
     assert data["year"] == 1925
 
@@ -106,7 +106,7 @@ def test_update_book(client, auth_headers):
         "/books",
         json={
             "title": "mooo",
-            "author": "maaa",
+            "author_id": 1,
             "genre": "yooo",
             "year": 1925,
         },
@@ -119,7 +119,7 @@ def test_update_book(client, auth_headers):
         f"/books/{book_id}",
         json={
             "title": "mooo",
-            "author": "maaa",
+            "author_id": 1,
             "genre": "yooo",
             "year": 1925,
         },
@@ -129,6 +129,6 @@ def test_update_book(client, auth_headers):
     data = response.json()
     assert data["book_id"] == book_id
     assert data["title"] == "mooo"
-    assert data["author"] == "maaa"
+    assert data["author_id"] == 1
     assert data["genre"] == "yooo"
     assert data["year"] == 1925

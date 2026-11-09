@@ -17,7 +17,7 @@ class LoanService:
         loans = await load_loans()
         loans_out = []
         for loan in loans:
-            if loan_date is None or loan.loan_date.startswith(loan_date.date().isoformat()):
+            if loan_date is None or loan.loan_date.date() == loan_date.date():
                 loans_out.append(LoanOut(**loan.model_dump()))
 
         total = len(loans_out)
@@ -30,13 +30,13 @@ class LoanService:
         if user_id is None:
             raise HTTPException(status_code=401, detail="unauthorized")
         loans = await load_loans()
-        loan_date = datetime.now().isoformat()
+        loan_date = datetime.now()
         new_loan = Loan(
             loan_id=max([stored_loan.loan_id for stored_loan in loans], default=0) + 1,
             book_id=loan.book_id,
             user_id=user_id,
             loan_date=loan_date,
-            return_date=loan.return_date.isoformat(),
+            return_date=loan.return_date,
         )
         loans.append(new_loan)
         await save_loans(loans)
@@ -79,7 +79,7 @@ class LoanService:
                     book_id=loan.book_id,
                     user_id=user_id,
                     loan_date=l.loan_date,
-                    return_date=loan.return_date.isoformat(),
+                    return_date=loan.return_date,
                 )
                 loans[i] = updated_loan
                 await save_loans(loans=loans)

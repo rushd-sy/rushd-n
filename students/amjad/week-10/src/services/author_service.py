@@ -15,7 +15,7 @@ class AuthorService:
         if user_id is None:
             raise HTTPException(status_code=401, detail="unauthorized")
         authors = await load_authors()
-        created_at = datetime.now().isoformat()
+        created_at = datetime.now()
         new_author = Author(
             author_id=max(
                 [stored_author.author_id for stored_author in authors], default=0
