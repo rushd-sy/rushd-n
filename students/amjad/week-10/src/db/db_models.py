@@ -10,7 +10,7 @@ class Book(Base):
 
     book_id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
-    author_id: Mapped[int] = mapped_column(ForeignKey("authors.author_id"), nullable=False)
+    author_id: Mapped[int] = mapped_column(ForeignKey("authors.author_id"), index=True, nullable=False)
     genre: Mapped[str] = mapped_column(String(100), nullable=False)
     year: Mapped[int] = mapped_column(nullable=False)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
