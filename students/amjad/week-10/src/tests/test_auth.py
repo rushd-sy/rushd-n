@@ -1,20 +1,25 @@
 
 import datetime
-import json
+
+
+import datetime
 
 
 def test_register_user(client):
-    response = client.post('/auth/register', json={
-        'name': 'Test',
-        'email': 'testuser@gmail.com',
-        'password': 'testpassword'
-    })
-    with open("users.json", "r", encoding="utf-8") as f:
-        users = json.loads(f.read())
+    response = client.post(
+        "/auth/register",
+        json={
+            "name": "Test",
+            "email": "testuser@gmail.com",
+            "password": "testpassword",
+        },
+    )
     assert response.status_code == 200
-    assert any(user['email'] == 'testuser@gmail.com' for user in users)
-    assert any(user['password'] != 'testpassword' for user in users)
-    assert any(user['name'] == 'Test' for user in users)
+    data = response.json()
+    assert data["email"] == "testuser@gmail.com"
+    assert data["name"] == "Test"
+    assert "user_id" in data
+    assert "password" not in data
 
 def test_login_user(client):
     client.post('/auth/register', json={

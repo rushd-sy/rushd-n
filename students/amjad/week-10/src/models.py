@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from typing import TypeVar, Generic
 from datetime import datetime
 
@@ -25,29 +25,14 @@ class BookCreate(BaseModel):
 
 
 class BookOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     book_id: int
     title: str
     author_id: int
     genre: str
     year: int
     created_at: datetime
-
-
-class Book(BaseModel):
-    book_id: int
-    title: str
-    author_id: int
-    genre: str
-    year: int
-    created_at: datetime
-
-
-class Loan(BaseModel):
-    loan_id: int
-    book_id: int
-    user_id: int
-    loan_date: datetime
-    return_date: datetime
 
 
 class LoanCreate(BaseModel):
@@ -57,6 +42,8 @@ class LoanCreate(BaseModel):
 
 
 class LoanOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     loan_id: int
     book_id: int
     user_id: int
@@ -64,14 +51,9 @@ class LoanOut(BaseModel):
     return_date: datetime
 
 
-class Author(BaseModel):
-    author_id: int
-    name: str
-    birth_year: int
-    created_at: datetime
-
-
 class AuthorOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     author_id: int
     name: str
     birth_year: int
@@ -84,19 +66,14 @@ class AuthorCreate(BaseModel):
 
 
 
-class User(BaseModel):
-    user_id: int
-    name: str
-    email: EmailStr
-    created_at: datetime
-    password: str
-
 class UserCreate(BaseModel):
     name: str = Field(min_length=1)
     email: EmailStr = Field(min_length=1)
     password: str = Field(min_length=8)
 
 class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     user_id: int
     name: str
     email: EmailStr

@@ -1,12 +1,11 @@
-from typing_extensions import Annotated
-
-from fastapi import HTTPException, Path
+from fastapi import HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from models import  TokenData, UserOut, UserCreate, User, Token
-from storage import load_users, save_users
+from models import  TokenData, UserOut, UserCreate, Token
 from pwdlib import PasswordHash
 from datetime import datetime, timedelta, timezone
-from dependency import CurrentUserDep
+from dependency import CommonsDepForDB, CurrentUserDep
+from sqlalchemy import select
+from db.db_models import User as DBUser
 import jwt
 import os
 
@@ -16,8 +15,9 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
 class UserService:
-    def __init__(self):
+    def __init__(self, db : CommonsDepForDB) -> None:
         self.password_hash = PasswordHash.recommended()
+        self.db = db
 
     def get_password_hash(self, password: str) -> str:
         return self.password_hash.hash(password)
@@ -33,40 +33,43 @@ class UserService:
 
     async def login(self, login_data: OAuth2PasswordRequestForm) -> Token:
         email, password = login_data.username, login_data.password
-        users = await load_users()
-        for user in users:
-            if user.email == email and self.verify_password(password, user.password):
-                user_id = user.user_id
-                access_token = self.create_access_token(TokenData(user_id=user_id))
-                return Token(access_token=access_token.access_token)
-        raise HTTPException(status_code=401, detail="email or password is incorrect")
+        query = select(DBUser).where(DBUser.email == email)
+        result = await self.db.execute(query)
+        db_user = result.scalar_one_or_none()
+        if not db_user:
+            raise HTTPException(status_code=401, detail="email or password is incorrect")
+        if not self.verify_password(password, db_user.password):
+            raise HTTPException(status_code=401, detail="email or password is incorrect")
+        user_id = db_user.user_id
+        access_token = self.create_access_token(TokenData(user_id=user_id))
+        return Token(access_token=access_token.access_token)
 
     async def create_user(self, user_create: UserCreate) -> UserOut:
-        users = await load_users()
-        new_user_id = max([user.user_id for user in users], default=0) + 1
-        if any(user.email == user_create.email for user in users):
+        query = select(DBUser).where(DBUser.email == user_create.email)
+        result = await self.db.execute(query)
+        db_user = result.scalar_one_or_none()
+        if db_user:
             raise HTTPException(status_code=400, detail="Email already registered")
-        new_user = User(
-            user_id=new_user_id,
+        new_user = DBUser(
             name=user_create.name,
             email=user_create.email,
             created_at=datetime.now(),
             password=self.get_password_hash(user_create.password)
         )
-        users.append(new_user)
-        await save_users(users)
-        return UserOut(**new_user.model_dump())
+        self.db.add(new_user)
+        await self.db.commit()
+        await self.db.refresh(new_user)
+        return UserOut.model_validate(new_user)
 
     async def delete_User(
         self, user_id: CurrentUserDep
     ) -> UserOut:
         if user_id is None:
             raise HTTPException(status_code=401, detail="unauthorized")
-        users = await load_users()
-        for i, user in enumerate(users):
-            if user.user_id == user_id:
-                deleted_user = UserOut(**users[i].model_dump())
-                users.pop(i)
-                await save_users(users)
-                return deleted_user
-        raise HTTPException(status_code=404, detail="User not found")
+        db_user = await self.db.get(DBUser, user_id)
+        if not db_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        user_out = UserOut.model_validate(db_user)
+        await self.db.delete(db_user)
+        await self.db.commit()
+        return user_out

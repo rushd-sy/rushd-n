@@ -2,59 +2,56 @@ from fastapi import HTTPException, Path, Query
 from typing import Annotated
 
 from datetime import datetime
-from models import Author, AuthorCreate, AuthorOut, Page
-from storage import load_authors, save_authors
-from dependency import CommonsDepForPagination, CurrentUserDep
-
+from models import AuthorCreate, AuthorOut, Page
+from db.db_models import Author as DBAuthor
+from dependency import CommonsDepForPagination, CurrentUserDep, CommonsDepForDB
+from sqlalchemy import select, func
 
 class AuthorService:
+    def __init__(self, db: CommonsDepForDB) -> None:
+        self.db = db
 
     async def create_author(
         self, author: AuthorCreate, user_id: CurrentUserDep
     ) -> AuthorOut:
         if user_id is None:
             raise HTTPException(status_code=401, detail="unauthorized")
-        authors = await load_authors()
-        created_at = datetime.now()
-        new_author = Author(
-            author_id=max(
-                [stored_author.author_id for stored_author in authors], default=0
-            )
-            + 1,
+        new_author = DBAuthor(
             name=author.name,
             birth_year=author.birth_year,
-            created_at=created_at,
+            created_at=datetime.now(),
         )
-        authors.append(new_author)
-        await save_authors(authors)
-        return AuthorOut(**new_author.model_dump())
+        self.db.add(new_author)
+        await self.db.commit()
+        await self.db.refresh(new_author)
+        return AuthorOut.model_validate(new_author)
 
     async def get_authors(
         self,
         commons: CommonsDepForPagination,
         author: str | None = Query(default=None, description="Filter authors by name"),
     ) -> Page[AuthorOut]:
-        authors = await load_authors()
-        authors_out = []
-        for a in authors:
-            if author and a.name != author:
-                continue
-            authors_out.append(AuthorOut(**a.model_dump()))
-
-        total = len(authors_out)
         offset = commons.offset
         limit = commons.limit
-        authors_out = authors_out[offset : offset + limit]
+        query = select(DBAuthor)
+        if author is not None:
+            query = query.where(DBAuthor.name == author)
+        count_query = select(func.count()).select_from(query.subquery())
+        total = (await self.db.execute(count_query)).scalar_one()
+        result = await self.db.execute(query.order_by(DBAuthor.author_id).offset(offset).limit(limit))
+        db_authors = result.scalars().all()
+        authors_out = [AuthorOut.model_validate(author) for author in db_authors]
         return Page[AuthorOut](
             items=authors_out, total=total, offset=offset, limit=limit
         )
 
     async def get_author(self, author_id: Annotated[int, Path(gt=0)]) -> AuthorOut:
-        authors = await load_authors()
-        for author in authors:
-            if author.author_id == author_id:
-                return AuthorOut(**author.model_dump())
-        raise HTTPException(status_code=404, detail="Author not found")
+        query = select(DBAuthor).where(DBAuthor.author_id == author_id)
+        result = await self.db.execute(query)
+        db_author = result.scalar_one_or_none()
+        if not db_author:
+            raise HTTPException(status_code=404, detail="Author not found")
+        return AuthorOut.model_validate(db_author)
 
     async def update_author(
         self,
@@ -64,30 +61,28 @@ class AuthorService:
     ) -> AuthorOut:
         if user_id is None:
             raise HTTPException(status_code=401, detail="unauthorized")
-        authors = await load_authors()
-        for i, a in enumerate(authors):
-            if a.author_id == author_id:
-                updated_author = Author(
-                    author_id=author_id,
-                    name=author.name,
-                    birth_year=author.birth_year,
-                    created_at=a.created_at,
-                )
-                authors[i] = updated_author
-                await save_authors(authors)
-                return AuthorOut(**authors[i].model_dump())
-        raise HTTPException(status_code=404, detail="Author not found")
+        query = select(DBAuthor).where(DBAuthor.author_id == author_id)
+        result = await self.db.execute(query)
+        db_author = result.scalar_one_or_none()
+        if not db_author:
+            raise HTTPException(status_code=404, detail="Author not found")
+        db_author.name = author.name
+        db_author.birth_year = author.birth_year
+        await self.db.commit()
+        await self.db.refresh(db_author)
+        return AuthorOut.model_validate(db_author)
 
     async def delete_author(
         self, author_id: Annotated[int, Path(gt=0)], user_id: CurrentUserDep
     ) -> AuthorOut:
         if user_id is None:
             raise HTTPException(status_code=401, detail="unauthorized")
-        authors = await load_authors()
-        for i, author in enumerate(authors):
-            if author.author_id == author_id:
-                deleted_author = AuthorOut(**authors[i].model_dump())
-                authors.pop(i)
-                await save_authors(authors)
-                return deleted_author
-        raise HTTPException(status_code=404, detail="Author not found")
+        query = select(DBAuthor).where(DBAuthor.author_id == author_id)
+        result = await self.db.execute(query)
+        db_author = result.scalar_one_or_none()
+        if not db_author:
+            raise HTTPException(status_code=404, detail="Author not found")
+        author_out = AuthorOut.model_validate(db_author)
+        await self.db.delete(db_author)
+        await self.db.commit()
+        return author_out

@@ -7,9 +7,12 @@ from fastapi.security import OAuth2PasswordBearer
 from models import  PageParams, TokenData
 import jwt
 from fastapi import HTTPException
-from storage import load_users
 from dotenv import load_dotenv
 from db.database import get_db, AsyncSession
+from sqlalchemy import select
+from db.db_models import User
+
+CommonsDepForDB = Annotated[AsyncSession, Depends(get_db)]
 
 load_dotenv()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -34,18 +37,18 @@ def decode_access_token(token: str) -> TokenData:
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
     
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> int:
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db : CommonsDepForDB) -> int:
     payload = decode_access_token(token)
     user_id = payload.user_id
     if user_id is None:
         raise HTTPException(status_code=401, detail="Invalid token")
-    users = await load_users()
-    for user in users:
-        if user.user_id == user_id:
-            return user_id
-    raise HTTPException(status_code=404, detail="User not found")
+    query = select(User).where(User.user_id == user_id)
+    result = await db.execute(query)
+    db_user = result.scalar_one_or_none()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user_id
 
 
 CommonsDepForPagination = Annotated[PageParams, Depends(get_pagination_params)]
 CurrentUserDep = Annotated[int, Depends(get_current_user)]
-CommonsDepForDB = Annotated[AsyncSession, Depends(get_db)]

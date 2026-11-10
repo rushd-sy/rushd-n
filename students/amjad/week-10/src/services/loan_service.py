@@ -1,67 +1,71 @@
+
 from fastapi import HTTPException, Path
 from typing import Annotated
 
 from datetime import datetime
-from models import LoanCreate, LoanOut, Loan, Page
-from storage import load_loans, save_loans
-from dependency import CommonsDepForPagination, CurrentUserDep
 
+from sqlalchemy import func, select, func
+from models import LoanCreate, LoanOut, Page
+from db.db_models import Loan as DBLoan
+from dependency import CommonsDepForPagination, CurrentUserDep, CommonsDepForDB
 
 class LoanService:
+    def __init__(self, db: CommonsDepForDB) -> None:
+        self.db = db
 
     async def get_loans(
         self,
         commons: CommonsDepForPagination,
         loan_date: datetime | None = None,
     ) -> Page[LoanOut]:
-        loans = await load_loans()
-        loans_out = []
-        for loan in loans:
-            if loan_date is None or loan.loan_date.date() == loan_date.date():
-                loans_out.append(LoanOut(**loan.model_dump()))
-
-        total = len(loans_out)
         offset = commons.offset
         limit = commons.limit
-        loans_out = loans_out[offset : offset + limit]
+        query = select(DBLoan)
+        if loan_date is not None:
+            query = query.where(func.date(DBLoan.loan_date) == loan_date.date())
+        count_query = select(func.count()).select_from(query.subquery())
+        total = (await self.db.execute(count_query)).scalar_one()
+        result = await self.db.execute(query.order_by(DBLoan.loan_id).offset(offset).limit(limit))
+        db_loans = result.scalars().all()
+        loans_out = [LoanOut.model_validate(loan) for loan in db_loans]
         return Page[LoanOut](items=loans_out, total=total, offset=offset, limit=limit)
 
     async def create_loan(self, loan: LoanCreate, user_id: CurrentUserDep) -> LoanOut:
         if user_id is None:
             raise HTTPException(status_code=401, detail="unauthorized")
-        loans = await load_loans()
-        loan_date = datetime.now()
-        new_loan = Loan(
-            loan_id=max([stored_loan.loan_id for stored_loan in loans], default=0) + 1,
+        new_loan = DBLoan(
             book_id=loan.book_id,
             user_id=user_id,
-            loan_date=loan_date,
+            loan_date=datetime.now(),
             return_date=loan.return_date,
         )
-        loans.append(new_loan)
-        await save_loans(loans)
-        return LoanOut(**new_loan.model_dump())
+        self.db.add(new_loan)
+        await self.db.commit()
+        await self.db.refresh(new_loan)
+        return LoanOut.model_validate(new_loan)
 
     async def delete_loan(
         self, loan_id: Annotated[int, Path(gt=0)], user_id: CurrentUserDep
     ) -> LoanOut:
         if user_id is None:
             raise HTTPException(status_code=401, detail="unauthorized")
-        loans = await load_loans()
-        for i, loan in enumerate(loans):
-            if loan.loan_id == loan_id:
-                deleted_loan = LoanOut(**loans[i].model_dump())
-                loans.pop(i)
-                await save_loans(loans)
-                return deleted_loan
-        raise HTTPException(status_code=404, detail="Loan not found")
+        query = select(DBLoan).where(DBLoan.loan_id == loan_id)
+        result = await self.db.execute(query)
+        db_loan = result.scalar_one_or_none()
+        if not db_loan:
+            raise HTTPException(status_code=404, detail="Loan not found")
+        loan_out = LoanOut.model_validate(db_loan)
+        await self.db.delete(db_loan)
+        await self.db.commit()
+        return loan_out
 
     async def get_loan(self, loan_id: Annotated[int, Path(gt=0)]) -> LoanOut:
-        loans = await load_loans()
-        for loan in loans:
-            if loan.loan_id == loan_id:
-                return LoanOut(**loan.model_dump())
-        raise HTTPException(status_code=404, detail="Loan not found")
+        query = select(DBLoan).where(DBLoan.loan_id == loan_id)
+        result = await self.db.execute(query)
+        db_loan = result.scalar_one_or_none()
+        if not db_loan:
+            raise HTTPException(status_code=404, detail="Loan not found")
+        return LoanOut.model_validate(db_loan)
 
     async def update_loan(
         self,
@@ -71,17 +75,14 @@ class LoanService:
     ) -> LoanOut:
         if user_id is None:
             raise HTTPException(status_code=401, detail="unauthorized")
-        loans = await load_loans()
-        for i, l in enumerate(loans):
-            if l.loan_id == loan_id:
-                updated_loan = Loan(
-                    loan_id=loan_id,
-                    book_id=loan.book_id,
-                    user_id=user_id,
-                    loan_date=l.loan_date,
-                    return_date=loan.return_date,
-                )
-                loans[i] = updated_loan
-                await save_loans(loans=loans)
-                return LoanOut(**loans[i].model_dump())
-        raise HTTPException(status_code=404, detail="Loan not found")
+        query = select(DBLoan).where(DBLoan.loan_id == loan_id)
+        result = await self.db.execute(query)
+        db_loan = result.scalar_one_or_none()
+        if not db_loan:
+            raise HTTPException(status_code=404, detail="Loan not found")
+        db_loan.book_id = loan.book_id
+        db_loan.user_id = user_id
+        db_loan.return_date = loan.return_date
+        await self.db.commit()
+        await self.db.refresh(db_loan)
+        return LoanOut.model_validate(db_loan)
