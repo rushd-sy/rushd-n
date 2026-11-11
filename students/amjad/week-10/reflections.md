@@ -1,2 +1,3 @@
-jwt is hard to implement but it had learned me alot of informations
-CORS concept is not fully understoodable, or maybe i should interact with frontend to get better understanding 
+the engine, the connections between things (sqlalchemy, alembic and monkeypatch) are hard to understand and implement
+sql queries using sqlalchemy are clean espiaclly after leanning raw sql
+changing things from json and dict storing to real db are easy and make everything make sense now 
