@@ -1,12 +1,12 @@
 import pytest
 
 
-def test_create_book(client, auth_headers):
+def test_create_book(client, auth_headers, create_author):
     response = client.post(
         "/books",
         json={
             "title": "mooo",
-            "author_id": 1,
+            "author_id": create_author["author_id"],
             "genre": "yooo",
             "year": 1925,
         },
@@ -15,7 +15,7 @@ def test_create_book(client, auth_headers):
     assert response.status_code == 200
     data = response.json()
     assert data["title"] == "mooo"
-    assert data["author_id"] == 1
+    assert data["author_id"] == create_author["author_id"]
     assert data["genre"] == "yooo"
     assert data["year"] == 1925
     assert "book_id" in data
@@ -51,12 +51,13 @@ def test_create_book_invalid_input(client, invalid_input, auth_headers):
     assert response.status_code == 422
 
 
-def test_update_book_not_found(client, auth_headers):
+
+def test_update_book_not_found(client, auth_headers, create_author):
     response = client.put(
         "/books/999",
         json={
             "title": "mooo",
-            "author_id": 1,
+            "author_id": create_author["author_id"],
             "genre": "yooo",
             "year": 1925,
         },
@@ -66,24 +67,24 @@ def test_update_book_not_found(client, auth_headers):
     assert response.json() == {"message": "Book 999 not found"}
 
 
-def test_unauthorized_access(client):
+def test_unauthorized_access(client, create_author):
     response = client.post(
         "/books",
         json={
             "title": "mooo",
-            "author_id": 1,
+            "author_id": create_author["author_id"],
             "genre": "yooo",
             "year": 1925,
         },
     )
     assert response.status_code == 401
 
-def test_delete_book(client, auth_headers):
+def test_delete_book(client, auth_headers, create_author):
     response = client.post(
         "/books",
         json={
             "title": "mooo",
-            "author_id": 1,
+            "author_id": create_author["author_id"],
             "genre": "yooo",
             "year": 1925,
         },
@@ -97,16 +98,16 @@ def test_delete_book(client, auth_headers):
     data = response.json()
     assert data["book_id"] == book_id
     assert data["title"] == "mooo"
-    assert data["author_id"] == 1
+    assert data["author_id"] == create_author["author_id"]
     assert data["genre"] == "yooo"
     assert data["year"] == 1925
 
-def test_update_book(client, auth_headers):
+def test_update_book(client, auth_headers, create_author):
     response = client.post(
         "/books",
         json={
             "title": "mooo",
-            "author_id": 1,
+            "author_id": create_author["author_id"],
             "genre": "yooo",
             "year": 1925,
         },
@@ -129,6 +130,6 @@ def test_update_book(client, auth_headers):
     data = response.json()
     assert data["book_id"] == book_id
     assert data["title"] == "mooo"
-    assert data["author_id"] == 1
+    assert data["author_id"] == create_author["author_id"]
     assert data["genre"] == "yooo"
     assert data["year"] == 1925
