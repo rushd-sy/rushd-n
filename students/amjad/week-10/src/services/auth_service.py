@@ -5,7 +5,7 @@ from pwdlib import PasswordHash
 from datetime import datetime, timedelta, timezone
 from dependency import CommonsDepForDB, CurrentUserDep
 from sqlalchemy import select
-from db.db_models import User as DBUser
+from db.db_models.User import User as DBUser
 import jwt
 import os
 

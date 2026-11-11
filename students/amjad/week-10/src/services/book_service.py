@@ -4,7 +4,7 @@ from fastapi import HTTPException, BackgroundTasks
 
 from datetime import datetime
 from models import BookCreate, BookOut, Page
-from db.db_models import Book as DBBook
+from db.db_models.Book import Book as DBBook
 from dependency import CommonsDepForPagination, CurrentUserDep, CommonsDepForDB
 from exceptions import BookNotFoundError
 from sqlalchemy import select, func

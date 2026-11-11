@@ -6,7 +6,7 @@ from datetime import datetime
 
 from sqlalchemy import func, select, func
 from models import LoanCreate, LoanOut, Page
-from db.db_models import Loan as DBLoan
+from db.db_models.Loan import Loan as DBLoan
 from dependency import CommonsDepForPagination, CurrentUserDep, CommonsDepForDB
 
 class LoanService:

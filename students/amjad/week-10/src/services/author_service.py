@@ -3,7 +3,7 @@ from typing import Annotated
 
 from datetime import datetime
 from models import AuthorCreate, AuthorOut, Page
-from db.db_models import Author as DBAuthor
+from db.db_models.Author import Author as DBAuthor
 from dependency import CommonsDepForPagination, CurrentUserDep, CommonsDepForDB
 from sqlalchemy import select, func
 
