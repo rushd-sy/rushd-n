@@ -1,8 +1,11 @@
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from database.models.loans import Loan
 
 from database.base import Base
-from database.models.loans import Loan
 
 
 class User(Base):

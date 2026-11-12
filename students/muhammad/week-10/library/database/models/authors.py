@@ -1,9 +1,11 @@
 from datetime import date
 from sqlalchemy import Date, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from .books import Book
 
-from books import Book
 from database.base import Base
 
 class Author(Base):

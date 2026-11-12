@@ -2,10 +2,13 @@
 from datetime import date
 from sqlalchemy import Date, ForeignKey, Integer, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from .books import Book
+
+from .users import User
 from database.base import Base
-from books import Book
-from users import User
 
 
 class Loan(Base):
