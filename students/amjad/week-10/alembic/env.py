@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 ROOT_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT_DIR))
 
-from src.db.db_models import Base
+from src.db.models import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
