@@ -2,7 +2,8 @@ from fastapi import Depends, Path, APIRouter
 from typing import Annotated
 from datetime import datetime
 
-from models import LoanCreate, LoanOut, Page
+from schemas.loan import LoanCreate, LoanOut
+from schemas.common import Page
 from dependency import CommonsDepForPagination, CurrentUserDep
 from services.loan_service import LoanService
 

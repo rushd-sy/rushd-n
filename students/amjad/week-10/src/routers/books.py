@@ -1,7 +1,8 @@
 from fastapi import Depends, Path, APIRouter, BackgroundTasks
 from typing import Annotated
 
-from models import BookCreate, BookOut, Page
+from schemas.book import BookCreate, BookOut
+from schemas.common import Page
 from dependency import CommonsDepForPagination, CurrentUserDep
 from services.book_service import BookService
 

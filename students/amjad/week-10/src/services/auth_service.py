@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from models import  TokenData, UserOut, UserCreate, Token
+from schemas.auth import TokenData, UserOut, UserCreate, Token
 from pwdlib import PasswordHash
 from datetime import datetime, timedelta, timezone
 from dependency import CommonsDepForDB, CurrentUserDep

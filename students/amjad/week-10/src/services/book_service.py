@@ -3,7 +3,8 @@ import asyncio
 from fastapi import HTTPException, BackgroundTasks
 
 from datetime import datetime
-from models import BookCreate, BookOut, Page
+from schemas.book import BookCreate, BookOut
+from schemas.common import Page
 from db.models.Book import Book as DBBook
 from db.models.Author import Author as DBAuthor
 from dependency import CommonsDepForPagination, CurrentUserDep, CommonsDepForDB

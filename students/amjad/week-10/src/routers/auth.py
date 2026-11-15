@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi.security import OAuth2PasswordRequestForm
 from dependency import CurrentUserDep
 
-from models import UserCreate, UserOut, Token
+from schemas.auth import UserCreate, UserOut, Token
 from services.auth_service import UserService
 
 router = APIRouter()

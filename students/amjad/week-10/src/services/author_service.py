@@ -2,7 +2,8 @@ from fastapi import HTTPException, Path, Query
 from typing import Annotated
 
 from datetime import datetime
-from models import AuthorCreate, AuthorOut, Page
+from schemas.author import AuthorCreate, AuthorOut
+from schemas.common import Page
 from db.models.Author import Author as DBAuthor
 from dependency import CommonsDepForPagination, CurrentUserDep, CommonsDepForDB
 from sqlalchemy import select, func

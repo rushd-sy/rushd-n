@@ -4,7 +4,8 @@ from fastapi import Depends, Query
 from typing import Annotated
 
 from fastapi.security import OAuth2PasswordBearer
-from models import  PageParams, TokenData
+from schemas.common import PageParams
+from schemas.auth import TokenData
 import jwt
 from fastapi import HTTPException
 from dotenv import load_dotenv

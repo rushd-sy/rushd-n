@@ -1,7 +1,8 @@
 from fastapi import Depends, Path, Query, APIRouter
 from typing import Annotated
 
-from models import AuthorCreate, AuthorOut, Page
+from schemas.author import AuthorCreate, AuthorOut
+from schemas.common import Page
 from dependency import CommonsDepForPagination, CurrentUserDep
 from services.author_service import AuthorService
 

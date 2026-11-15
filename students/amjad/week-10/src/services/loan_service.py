@@ -5,7 +5,8 @@ from typing import Annotated
 from datetime import datetime
 
 from sqlalchemy import func, select, func
-from models import LoanCreate, LoanOut, Page
+from schemas.loan import LoanCreate, LoanOut
+from schemas.common import Page
 from db.models.Loan import Loan as DBLoan
 from db.models.Book import Book as DBBook
 from dependency import CommonsDepForPagination, CurrentUserDep, CommonsDepForDB
