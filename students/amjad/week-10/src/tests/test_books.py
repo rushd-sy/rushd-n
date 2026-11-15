@@ -133,3 +133,44 @@ def test_update_book(client, auth_headers, create_author):
     assert data["author_id"] == create_author["author_id"]
     assert data["genre"] == "yooo"
     assert data["year"] == 1925
+
+def test_create_book_with_nonexistent_author(client, auth_headers):
+    response = client.post(
+        "/books",
+        json={
+            "title": "mooo",
+            "author_id": 9999,
+            "genre": "yooo",
+            "year": 2000,
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == 400
+    assert response.json() == {"detail": "author not found"}
+
+def test_update_book_with_nonexistent_author(client, auth_headers, create_author):
+    response = client.post(
+        "/books",
+        json={
+            "title": "mooo",
+            "author_id": create_author["author_id"],
+            "genre": "yooo",
+            "year": 2000,
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+    book_id = response.json()["book_id"]
+
+    response = client.put(
+        f"/books/{book_id}",
+        json={
+            "title": "mooo",
+            "author_id": 9999,
+            "genre": "yooo",
+            "year": 2000,
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == 400
+    assert response.json() == {"detail": "author not found"}

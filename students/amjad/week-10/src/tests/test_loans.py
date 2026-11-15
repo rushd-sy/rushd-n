@@ -92,3 +92,30 @@ def test_auth_user_isnt_the_same_as_loan_user(client, auth_headers, create_book)
     assert get_response.status_code == 200
     get_data = get_response.json()
     assert get_data["user_id"] == 1 
+
+def test_update_loan_nonexistent_book(client, auth_headers, create_book):
+    response = client.post(
+        "/loans",
+        json={"book_id": create_book["book_id"], "user_id": 1, "return_date": "2026-01-01"},
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+    data = response.json()
+    loan_id = data["loan_id"]
+
+    update_response = client.put(
+        f"/loans/{loan_id}",
+        json={"book_id": 9999, "user_id": 1, "return_date": "2026-02-01"},
+        headers=auth_headers,
+    )
+    assert update_response.status_code == 400
+    assert update_response.json() == {"detail": "book not found"}
+
+def test_create_loan_with_nonexistent_book(client, auth_headers):
+    response = client.post(
+        "/loans",
+        json={"book_id": 9999, "user_id": 1, "return_date": "2026-01-01"},
+        headers=auth_headers,
+    )
+    assert response.status_code == 400
+    assert response.json() == {"detail": "book not found"}
