@@ -2,11 +2,11 @@ from pydantic import BaseModel, field_validator, Field
 
 
 class User(BaseModel):
+    user_id: int = Field(gt=0)
     username: str
     full_name: str
     email: str
     password: str
-    user_id: int = Field(gt=0)
 
 class UserCreate(BaseModel):
     username: str

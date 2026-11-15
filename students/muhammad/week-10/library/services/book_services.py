@@ -1,98 +1,166 @@
-from datetime import date
+from sqlalchemy import select, func
+from sqlalchemy.orm import selectinload
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.books import BookCreate, BookModel, BookResponse
+from database.models.books import Book
+from database.models.authors import Author
+from database.models.loans import Loan
+from models.books import BookCreate, BookResponse
 from models.page import Page
-from utils.storage import load_books, save_books
-from exceptions import BookNotFoundError
+from exceptions import AuthorNotFoundError, BookNotFoundError, BookHasLoansError
 
 class BookServices:
 
     async def get_books (        
         self,
-        author : str | None = None,
+        db: AsyncSession,
+        author_id : int | None = None,
         genre : str | None = None,
         min_publish_year : int | None = None,
+        max_publish_year : int | None = None,
         offset: int = 0,
         limit: int = 20
     ) -> Page[BookResponse]:
         
-        books = await load_books()
-        books_out = []
+        conditions = []
         
-        for book_model in books:
-            if author and book_model.author != author:
-                continue
-            if genre and book_model.genre != genre:
-                continue
-            if min_publish_year and book_model.publish_year < min_publish_year:
-                continue
-            
-            book = BookResponse(**book_model.model_dump())
-            books_out.append(book)
-        
-        total = len(books_out)
-        books_out = books_out[offset:offset + limit]
-        
-        return Page[BookResponse](
-            items=books_out,
-            total=total,
-            offset=offset,
-            limit=limit
-        )
+        if author_id is not None:
+            conditions.append(Book.author.has(Author.author_id == author_id))
     
+        if genre is not None:
+            conditions.append(Book.genre == genre)
+
+        if min_publish_year is not None:
+            conditions.append(Book.publish_year >= min_publish_year)
+            
+        if max_publish_year is not None:
+            conditions.append(Book.publish_year <= max_publish_year)
+            
+        
+        total = await db.scalar (
+            select(func.count(Book.book_id)).select_from(Book).where(*conditions)
+        )
+
+        result = await db.scalars (
+            select(Book)
+            .where(*conditions)
+            .order_by(Book.book_id)
+            .offset(offset)
+            .limit(limit)
+        )
+        
+        books = result.all()
+
+        return Page[BookResponse] (
+            items=[
+                BookResponse.model_validate(book) for book in books
+            ],
+            total=total or 0,
+            offset=offset,
+            limit=limit,
+        )
+
     async def get_book_by_id (
         self,
+        db: AsyncSession,
         book_id: int
     ) -> BookResponse:
         
-        books = await load_books()
+        book = await db.scalar(select(Book).options(selectinload(Book.author)).where(Book.book_id==book_id))
         
-        for book in books:
-            if book.book_id == book_id:
-                return BookResponse(**book.model_dump())
+        if book is None:
+            raise BookNotFoundError(book_id)
         
-        raise BookNotFoundError(book_id)
+        return BookResponse.model_validate(book)
     
     async def create_book (
         self,
+        db: AsyncSession,
         request_book: BookCreate
     ) -> BookResponse:
         
-        books = await load_books()
+        author = await db.get(Author, request_book.author_id)
         
-        created_book = BookModel(
-        book_id=max([book.book_id for book in books], default=0) + 1,
-            **request_book.model_dump(),
-            creation_date=date.today(),
+        if author is None:
+            raise AuthorNotFoundError(request_book.author_id)
+    
+        new = Book (
+            title=request_book.title,
+            author_id=request_book.author_id,
+            genre=request_book.genre,
+            publish_year=request_book.publish_year
         )
-        books.append(created_book)
-        await save_books(books)
-        respond = BookResponse(**created_book.model_dump())
-        return respond
+        
+        db.add(new)
+        
+        try:
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            raise Exception
+        
+        await db.refresh(new)
+        
+        return BookResponse.model_validate(new)
 
-    async def delete_book(self, book_id: int) -> BookResponse:
-        books = await load_books()
-        for index, book in enumerate(books):
-            if book.book_id == book_id:
-                del books[index]
-                await save_books(books)
-                return BookResponse(**book.model_dump())
+    async def delete_book(
+        self,
+        db: AsyncSession,
+        book_id: int) -> BookResponse:
         
-        raise BookNotFoundError(book_id)
-    
-    async def update_book(self, book_id: int, request_book: BookCreate) -> BookResponse:
-        books = await load_books()
-    
-        for index, book in enumerate(books):
-            if book.book_id == book_id:
-                UpdatedBook = BookModel (
-                    book_id=book_id,
-                    **request_book.model_dump(),
-                    creation_date=book.creation_date,
-                )
-                
-                books[index] = UpdatedBook
-                await save_books(books)
-                return BookResponse(**UpdatedBook.model_dump())
+        book = await db.get(Book, book_id)
+
+        if book is None:
+            raise BookNotFoundError(book_id)
         
-        raise BookNotFoundError(book_id)
+        loan = await db.scalar(
+            select(Loan.loan_id)
+            .where(Loan.book_id == book_id)
+            .limit(1)
+        )
+        
+        if loan is not None:
+            raise BookHasLoansError(book_id)
+        
+        response = BookResponse.model_validate(book)
+        
+        try:
+            await db.delete(book)
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            raise 
+        
+        return response
+    
+    async def update_book(
+        self,
+        db: AsyncSession,
+        book_id: int,
+        request_book: BookCreate
+    ) -> BookResponse:
+
+        book = await db.scalar(select(Book).where(Book.book_id == book_id))
+
+        if book is None:
+            raise BookNotFoundError(book_id)
+        
+        author = await db.get(Author, request_book.author_id)
+        
+        if author is None:
+            raise AuthorNotFoundError(book.author_id)
+        
+        book.title = request_book.title
+        book.author_id = request_book.author_id
+        book.genre = request_book.genre
+        book.publish_year = request_book.publish_year
+        
+        try:
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            raise 
+        
+        await db.refresh(book)
+        
+        return BookResponse.model_validate(book)

@@ -1,90 +1,180 @@
+from fastapi import HTTPException
+from sqlalchemy import select, func
+from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import date
 
-from utils.storage import load_loans, save_loans
-from models.loans import LoanCreate, LoanModel, LoanResponse
+from database.models.loans import Loan
+from database.models.books import Book
+from models.loans import LoanCreate, LoanResponse
 from models.page import Page
-from exceptions import LoanNotFoundError
+from exceptions import LoanNotFoundError, BookNotFoundError
 
 class LoanServices:
 
     async def get_loans(
             self,
-            name: str | None = None,
-            loan_date: date | None = None,
+            db: AsyncSession,
+            user_id: int,
+            book_id: int | None = None,
             min_date: date | None = None,
             max_date: date | None = None,
             offset: int = 0,
             limit: int = 20
         ) -> Page[LoanResponse]:
+
+        conditions = [Loan.user_id == user_id]
         
-        loans = await load_loans()
-        loans_out = []
+        if min_date is not None and max_date is not None:
+            if min_date > max_date:
+                raise HTTPException(
+                    status_code=422,
+                    detail="min_date cannot be later than max_date"
+                )
+                
+        if book_id is not None:
+            conditions.append(Loan.book_id == book_id)
         
-        for loan_model in loans:
-            if name and loan_model.name != name:
-                continue
-            if loan_date and loan_model.loan_date != loan_date:
-                continue
-            if min_date and loan_model.loan_date < min_date:
-                continue
-            if max_date and loan_model.loan_date > max_date:
-                continue
-            loan = LoanResponse(**loan_model.model_dump())
-            loans_out.append(loan)
+        if min_date is not None:
+            conditions.append(Loan.loan_date >= min_date)
         
-        total = len(loans_out)
-        loans_out = loans_out[offset:offset + limit]
+        if max_date is not None:
+            conditions.append(Loan.loan_date <= max_date)
         
-        return Page[LoanResponse](
-            items=loans_out,
-            total=total,
+        total = await db.scalar(
+            select(func.count(Loan.loan_id))
+            .where(*conditions)
+        )
+        
+        result = await db.scalars(
+            select(Loan)
+            .where(*conditions)
+            .order_by(Loan.loan_id)
+            .offset(offset)
+            .limit(limit)
+        )
+        
+        loans = result.all()
+        
+        return Page[LoanResponse] (
+            items=[
+                LoanResponse.model_validate(loan)
+                for loan in loans
+            ],
+            total=total or 0,
             offset=offset,
             limit=limit
         )
     
-    async def get_loan_by_id(self, loan_id: int) -> LoanResponse:
-        loans = await load_loans()
-        for loan in loans:
-            if loan.loan_id == loan_id:
-                return LoanResponse(**loan.model_dump())
-        raise LoanNotFoundError(loan_id)
-    
-    async def create_loan(self, request_loan: LoanCreate) -> LoanResponse:
-        loans = await load_loans()
-        created_loan = LoanModel(
-            loan_id=max([loan.loan_id for loan in loans], default=0) + 1,
-            **request_loan.model_dump(),
-            added_at=date.today(),
+    async def get_loan_by_id(
+        self, 
+        db: AsyncSession, 
+        loan_id: int,
+        user_id: int,
+    ) -> LoanResponse:
+        
+        loan = await db.scalar(
+            select(Loan)
+            .where(
+                Loan.user_id == user_id,
+                Loan.loan_id==loan_id
+            )
         )
-        loans.append(created_loan)
-        await save_loans(loans)
+        
+        if loan is None:
+            raise LoanNotFoundError(loan_id)
+        
+        return LoanResponse.model_validate(loan)
+    
+    async def create_loan(
+        self,
+        db: AsyncSession,
+        user_id: int,
+        request_loan: LoanCreate
+    ) -> LoanResponse:
 
-        return LoanResponse(
-            **created_loan.model_dump(),
+        book = await db.get(Book, request_loan.book_id)
+
+        if book is None:
+            raise BookNotFoundError(request_loan.book_id)
+
+        new_loan = Loan(
+            book_id=request_loan.book_id,
+            user_id=user_id,
+            loan_date=request_loan.loan_date
         )
+
+        db.add(new_loan)
+
+        try:
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            raise
+
+        await db.refresh(new_loan)
+
+        return LoanResponse.model_validate(new_loan)
     
-    async def update_loan(self, loan_id: int, request_loan: LoanCreate) -> LoanResponse:
-        loans = await load_loans()
-        for index, loan in enumerate(loans):
-            if loan.loan_id == loan_id:
-                updated_loan = LoanModel(
-                    loan_id=loan_id,
-                    **request_loan.model_dump(),
-                    added_at=loan.added_at,
-                )
-                
-                loans[index] = updated_loan
-                await save_loans(loans)
-                return LoanResponse(**updated_loan.model_dump())
-        
-        raise LoanNotFoundError(loan_id)
+    async def update_loan(
+        self,
+        db: AsyncSession,
+        loan_id: int,
+        user_id: int,
+        request_loan: LoanCreate
+    ) -> LoanResponse:
+
+        loan = await db.scalar(
+            select(Loan).where(
+                Loan.loan_id == loan_id,
+                Loan.user_id == user_id
+            )
+        )
+
+        if loan is None:
+            raise LoanNotFoundError(loan_id)
+
+        book = await db.get(Book, request_loan.book_id)
+
+        if book is None:
+            raise BookNotFoundError(request_loan.book_id)
+
+        loan.book_id = request_loan.book_id
+        loan.loan_date = request_loan.loan_date
+
+        try:
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            raise
+
+        await db.refresh(loan)
+
+        return LoanResponse.model_validate(loan)
     
-    async def delete_loan(self, loan_id: int) -> LoanResponse:        
-        loans = await load_loans()
-        for index, loan in enumerate(loans):
-            if loan.loan_id == loan_id:
-                del loans[index]
-                await save_loans(loans)
-                return LoanResponse(**loan.model_dump())
-        
-        raise LoanNotFoundError(loan_id)
+    async def delete_loan(
+        self,
+        db: AsyncSession,
+        loan_id: int,
+        user_id: int
+    ) -> LoanResponse:
+
+        loan = await db.scalar(
+            select(Loan).where(
+                Loan.loan_id == loan_id,
+                Loan.user_id == user_id
+            )
+        )
+
+        if loan is None:
+            raise LoanNotFoundError(loan_id)
+
+        response = LoanResponse.model_validate(loan)
+
+        try:
+            await db.delete(loan)
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            raise
+
+        return response

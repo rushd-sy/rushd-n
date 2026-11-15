@@ -1,102 +1,151 @@
-from datetime import date
 
-from models.authors import AuthorModel, AuthorCreate, AuthorResponse
+from sqlalchemy import select, func
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from database.models.authors import Author
+from database.models.books import Book
+from models.authors import AuthorCreate, AuthorResponse
 from models.page import Page
-from utils.storage import load_authors, save_authors
-from exceptions import AuthorNotFoundError
+from exceptions import AuthorNotFoundError, AuthorHasBookError
+
 
 
 class AuthorServices:
 
     async def get_authors(
         self,
+        db: AsyncSession,
         name: str | None = None,
         min_birth_year: int | None = None,
         max_birth_year: int | None = None,
         offset: int = 0,
         limit: int = 20
     ) -> Page[AuthorResponse]:
-        authors = await load_authors()
-        authors_out = []
 
-        for author_model in authors:
-            if name and author_model.name != name:
-                continue
-            if min_birth_year and author_model.birth_year < min_birth_year:
-                continue
-            if max_birth_year and author_model.birth_year > max_birth_year:
-                continue
-            author = AuthorResponse(**author_model.model_dump())
-            authors_out.append(author)
+        conditions = []
 
-        total = len(authors_out)
-        authors_out = authors_out[offset:offset + limit]
+        if name is not None:
+            conditions.append(Author.name == name)
+
+        if min_birth_year is not None:
+            conditions.append(Author.birth_year >= min_birth_year)
+
+        if max_birth_year is not None:
+            conditions.append(Author.birth_year <= max_birth_year)
+
+        total = await db.scalar(
+            select(func.count(Author.author_id))
+            .where(*conditions)
+        )
+
+        result = await db.scalars(
+            select(Author)
+            .where(*conditions)
+            .order_by(Author.author_id)
+            .offset(offset)
+            .limit(limit)
+        )
+
+        authors = result.all()
 
         return Page[AuthorResponse](
-            items=authors_out,
-            total=total,
+            items=[
+                AuthorResponse.model_validate(author)
+                for author in authors
+            ],
+            total=total or 0,
             offset=offset,
             limit=limit
         )
 
     async def get_author_by_id(
         self,
+        db: AsyncSession,
         author_id: int
     ) -> AuthorResponse:
-        authors = await load_authors()
-        for author in authors:
-            if author.author_id == author_id:
-                return AuthorResponse(**author.model_dump())
-        raise AuthorNotFoundError(author_id)
+
+        author = await db.get(Author, author_id)
+
+        if author is None:
+            raise AuthorNotFoundError(author_id)
+
+        return AuthorResponse.model_validate(author)
 
     async def create_author(
         self,
+        db: AsyncSession,
         request_author: AuthorCreate
     ) -> AuthorResponse:
 
-        authors = await load_authors()
-        created_author = AuthorModel(
-            author_id=max(
-                [author.author_id for author in authors],
-                default=0
-            ) + 1,
-            **request_author.model_dump(),
-            added_at=date.today()
+        new_author = Author(
+            name=request_author.name,
+            birth_year=request_author.birth_year
         )
 
-        authors.append(created_author)
-        await save_authors(authors)
-        return AuthorResponse(**created_author.model_dump())
+        db.add(new_author)
+
+        try:
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            raise
+
+        await db.refresh(new_author)
+
+        return AuthorResponse.model_validate(new_author)
 
     async def update_author(
         self,
+        db: AsyncSession,
         author_id: int,
         request_author: AuthorCreate
     ) -> AuthorResponse:
 
-        authors = await load_authors()
-        for index, author in enumerate(authors):
-            if author.author_id == author_id:
-                updated_author = AuthorModel(
-                    author_id=author_id,
-                    **request_author.model_dump(),
-                    added_at=author.added_at
-                )
-                authors[index] = updated_author
-                await save_authors(authors)
-                return AuthorResponse(**updated_author.model_dump())
-        raise AuthorNotFoundError(author_id)
+        author = await db.get(Author, author_id)
+
+        if author is None:
+            raise AuthorNotFoundError(author_id)
+
+        author.name = request_author.name
+        author.birth_year = request_author.birth_year
+
+        try:
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            raise
+
+        await db.refresh(author)
+
+        return AuthorResponse.model_validate(author)
 
     async def delete_author(
         self,
+        db: AsyncSession,
         author_id: int
     ) -> AuthorResponse:
 
-        authors = await load_authors()
-        for index, author in enumerate(authors):
-            if author.author_id == author_id:
-                del authors[index]
-                await save_authors(authors)
-                return AuthorResponse(**author.model_dump())
+        author = await db.get(Author, author_id)
 
-        raise AuthorNotFoundError(author_id)
+        if author is None:
+            raise AuthorNotFoundError(author_id)
+
+        existing_book = await db.scalar(
+            select(Book.book_id)
+            .where(Book.author_id == author_id)
+            .limit(1)
+        )
+
+        if existing_book is not None:
+            raise AuthorHasBookError(author_id)
+
+        response = AuthorResponse.model_validate(author)
+
+        try:
+            await db.delete(author)
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            raise
+
+        return response

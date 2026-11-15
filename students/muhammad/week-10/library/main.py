@@ -11,16 +11,22 @@ from exceptions import (
     AuthorNotFoundError,
     DuplicateEmailError,
     DuplicateUsernameError, 
-    InvalidCredentialsError
+    InvalidCredentialsError,
+    BookHasLoansError,
+    AuthorHasBookError
 )
+
 from exception_handlers import (
+    book_has_loans_handler,
     book_not_found_error_handler,
     author_not_found_error_handler,
     loan_not_found_error_handler,
     duplicate_email_handler, 
     duplicate_username_handler,
-    invalid_credentials_handler
+    invalid_credentials_handler,
+    author_has_book_error_handler,
 )
+
 from middlewares.logging import UUIDLoggerMiddleWare, LoggerMiddleWare
 
 app = FastAPI()
@@ -52,3 +58,5 @@ app.add_exception_handler(AuthorNotFoundError, author_not_found_error_handler)
 app.add_exception_handler(DuplicateUsernameError, duplicate_username_handler)
 app.add_exception_handler(DuplicateEmailError, duplicate_email_handler)
 app.add_exception_handler(InvalidCredentialsError, invalid_credentials_handler)
+app.add_exception_handler(BookHasLoansError, book_has_loans_handler)
+app.add_exception_handler(AuthorHasBookError, author_has_book_error_handler)

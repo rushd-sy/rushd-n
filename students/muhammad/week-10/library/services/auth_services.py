@@ -1,50 +1,115 @@
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
+
+
 from models.token import TokenResponse
-from models.users import UserCreate, User, UserLogin
-from utils.users_store import users
+from models.users import UserCreate, UserLogin
+from database.models.users import User as UserORM
 from exceptions import DuplicateEmailError, DuplicateUsernameError, InvalidCredentialsError
 from utils.security import get_password_hash, verify_password, create_access_token
 
+
+
 class AuthServices:
-    
-    async def register_user(self, user_create: UserCreate) -> TokenResponse:
-        if user_create.username in [user.username for user in users]:
-            raise DuplicateUsernameError(user_create.username)
-        if user_create.email in [user.email for user in users]:
-            raise DuplicateEmailError(user_create.email)
-        
-        new_id = max([user.user_id for user in users], default = 0) + 1
-        hashed_password = get_password_hash(user_create.password)
-        new_user = User(
-            **user_create.model_dump(exclude={"password"}),
-            password=hashed_password,
-            user_id=new_id
+    async def register_user(
+        self,
+        db: AsyncSession,
+        user_create: UserCreate
+    ) -> TokenResponse:
+
+        existing_username = await db.scalar(
+            select(UserORM.user_id).where(
+                UserORM.username == user_create.username
+            )
         )
-        users.append(new_user)
-        
+
+        if existing_username is not None:
+            raise DuplicateUsernameError(user_create.username)
+
+        existing_email = await db.scalar(
+            select(UserORM.user_id).where(
+                UserORM.email == user_create.email
+            )
+        )
+
+        if existing_email is not None:
+            raise DuplicateEmailError(user_create.email)
+
+        hashed_password = get_password_hash(user_create.password)
+
+        new_user = UserORM(
+            username=user_create.username,
+            full_name=user_create.full_name,
+            email=user_create.email,
+            hashed_password=hashed_password
+        )
+
+        db.add(new_user)
+
+        try:
+            await db.commit()
+
+        except IntegrityError:
+            await db.rollback()
+            existing_username = await db.scalar(
+                select(UserORM.user_id).where(
+                    UserORM.username == user_create.username
+                )
+            )
+
+            if existing_username is not None:
+                raise DuplicateUsernameError(user_create.username)
+
+            existing_email = await db.scalar(
+                select(UserORM.user_id).where(
+                    UserORM.email == user_create.email
+                )
+            )
+
+            if existing_email is not None:
+                raise DuplicateEmailError(user_create.email)
+            raise
+
+        await db.refresh(new_user)
+
         access_token = create_access_token(
             data={"id": str(new_user.user_id)}
         )
-        return TokenResponse (
-            access_token= access_token,
-            token_type= "bearer"
+
+        return TokenResponse(
+            access_token=access_token,
+            token_type="bearer"
         )
 
-    async def login_user(self, user_login: UserLogin) -> TokenResponse:
-        user = next(
-            (user for user in users if user.username == user_login.username),
-            None
+    async def login_user(
+        self,
+        db: AsyncSession,
+        user_login: UserLogin
+    ) -> TokenResponse:
+
+        user = await db.scalar(
+            select(UserORM).where(
+                UserORM.username == user_login.username
+            )
         )
-        
+
         if user is None:
             verify_password(user_login.password)
             raise InvalidCredentialsError
-        if not verify_password(user_login.password, user.password):
+
+        if not verify_password(
+            user_login.password,
+            user.hashed_password
+        ):
             raise InvalidCredentialsError
+
         access_token = create_access_token(
             data={"id": str(user.user_id)}
         )
 
-        return TokenResponse (
-            access_token= access_token,
-            token_type= "bearer"
+        return TokenResponse(
+            access_token=access_token,
+            token_type="bearer"
         )

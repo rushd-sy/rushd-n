@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Path, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Annotated
 
+from database.connection import get_db
 from models.authors import AuthorResponse, AuthorCreate
 from models.page import Page
 from dependencies import get_pagination_params, get_current_user_id
@@ -11,6 +13,7 @@ router = APIRouter(prefix="/authors")
 
 @router.get("/")
 async def get_authors(
+    db: Annotated[AsyncSession, Depends(get_db)],
     author_services: Annotated[AuthorServices, Depends(AuthorServices)],
     pagination_params: Annotated[dict, Depends(get_pagination_params)],
     user_id: Annotated[str, Depends(get_current_user_id)],
@@ -20,6 +23,7 @@ async def get_authors(
 ) -> Page[AuthorResponse]:
 
     return await author_services.get_authors(
+        db=db,
         name=name,
         min_birth_year=min_birth_year,
         max_birth_year=max_birth_year,
@@ -30,40 +34,55 @@ async def get_authors(
 
 @router.get("/{author_id}", response_model=AuthorResponse)
 async def get_author(
+    db: Annotated[AsyncSession, Depends(get_db)],
     author_services: Annotated[AuthorServices, Depends(AuthorServices)],
     author_id: Annotated[int, Path(gt=0)],
     user_id: Annotated[str, Depends(get_current_user_id)],
 ) -> AuthorResponse:
-    return await author_services.get_author_by_id(author_id)
+    return await author_services.get_author_by_id(
+        db=db,
+        author_id=author_id
+    )
 
 
 @router.post("/", response_model=AuthorResponse)
 async def create_author(
+        db: Annotated[AsyncSession, Depends(get_db)],
         author_services: Annotated[AuthorServices, Depends(AuthorServices)],
         request_author: AuthorCreate,
         user_id: Annotated[str, Depends(get_current_user_id)],
     ) -> AuthorResponse:
-    return await author_services.create_author(request_author)
+    return await author_services.create_author(
+        request_author=request_author,
+        db=db
+    )
 
 
 @router.put("/{author_id}", response_model=AuthorResponse)
 async def update_author(
+        db: Annotated[AsyncSession, Depends(get_db)],
         author_services: Annotated[AuthorServices, Depends(AuthorServices)],
         author_id: Annotated[int, Path(gt=0)],
         request_author: AuthorCreate,
         user_id: Annotated[str, Depends(get_current_user_id)],
     ) -> AuthorResponse:
+    
     return await author_services.update_author(
-        author_id,
-        request_author
+        author_id=author_id,
+        request_author=request_author,
+        db=db
     )
 
 
 @router.delete("/{author_id}")
 async def delete_author(
+    db: Annotated[AsyncSession, Depends(get_db)],
     author_services: Annotated[AuthorServices, Depends(AuthorServices)],
     author_id: Annotated[int, Path(gt=0)],
     user_id: Annotated[str, Depends(get_current_user_id)]
 ) -> AuthorResponse:
 
-    return await author_services.delete_author(author_id)
+    return await author_services.delete_author(
+        author_id=author_id,
+        db=db
+    )

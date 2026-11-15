@@ -3,12 +3,14 @@ from fastapi.responses import JSONResponse
 from typing import cast
 
 from exceptions import (
+    BookHasLoansError,
     BookNotFoundError,
     LoanNotFoundError,
     AuthorNotFoundError,
     DuplicateEmailError,
     DuplicateUsernameError, 
-    InvalidCredentialsError
+    InvalidCredentialsError, 
+    AuthorHasBookError
 )
 
 
@@ -21,6 +23,18 @@ async def book_not_found_error_handler(
         status_code=404,
         content={
             "details": f"Book with id {exc.book_id} doesn't exist"
+        }
+    )
+
+async def book_has_loans_handler(
+    request: Request,
+    exc: Exception
+):
+    exc = cast(BookHasLoansError, exc)
+    return JSONResponse(
+        status_code=409,
+        content={
+            "details": f"Cannot delete book with id {exc.book_id}, the book has existing loans"
         }
     )
 
@@ -47,6 +61,18 @@ async def author_not_found_error_handler(
         status_code=404,
         content={
             "details": f"Author with id {exc.author_id} doesn't exist"
+        }
+    )
+
+async def author_has_book_error_handler(
+    request: Request,
+    exc: Exception
+):
+    exc = cast(AuthorHasBookError, exc)
+    return JSONResponse(
+        status_code=409,
+        content={
+            "details": f"Author with id {exc.author_id} can't be deleted beacuse they have books."
         }
     )
 

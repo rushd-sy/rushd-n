@@ -34,7 +34,6 @@ class Book(Base):
         nullable=False
     )
 
-
     publish_year: Mapped[int] = mapped_column(
         Integer,
         nullable=False

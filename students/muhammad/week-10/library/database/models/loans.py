@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .books import Book
+    from .users import User
 
-from .users import User
 from database.base import Base
 
 
