@@ -5,6 +5,8 @@ class Settings(BaseSettings):
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
+
+    TEST_DATABASE_URL: str
     DATABASE_URL: str
     
     model_config = SettingsConfigDict(env_file=".env")

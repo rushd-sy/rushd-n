@@ -1,7 +1,8 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import ValidationError
 
 from database.connection import get_db
 from models.users import UserCreate, UserLogin
@@ -37,13 +38,26 @@ async def login_user(
             Depends(AuthServices)
         ]
     ) -> TokenResponse:
-    
-    user_login = UserLogin(
-        username=form_data.username,
-        password=form_data.password,
-    )
-    
-    return await auth_services.login_user(
-        db=db, 
-        user_login=user_login
-    )
+
+    try:
+        user_login = UserLogin(
+            username=form_data.username,
+            password=form_data.password,
+        )
+
+    except ValidationError as exc:
+        errors = [
+            {
+                "loc": ["body", *error["loc"]],
+                "msg": error["msg"],
+                "type": error["type"],
+            }
+            for error in exc.errors()
+        ]
+
+        raise HTTPException(
+            status_code=422,
+            detail=errors
+        ) from exc
+
+    return await auth_services.login_user(db, user_login)
