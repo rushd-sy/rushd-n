@@ -55,12 +55,12 @@ async def create_loan(
         request_loan: LoanCreate,
         user_id: Annotated[int, Depends(get_current_user_id)],
     ):
+
     return await loan_services.create_loan(
         db=db,
         request_loan=request_loan,
         user_id=user_id
     )
-
 
 @router.put("/{loan_id}", response_model=LoanResponse)
 async def update_loan(
