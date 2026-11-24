@@ -1,0 +1,159 @@
+
+import datetime
+import pytest
+from fastapi.testclient import TestClient
+
+
+def test_register_user(client: TestClient) -> None:
+    response = client.post(
+        "/auth/register",
+        json={
+            "name": "Test",
+            "email": "testuser@gmail.com",
+            "password": "testpassword",
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["email"] == "testuser@gmail.com"
+    assert data["name"] == "Test"
+    assert "user_id" in data
+    assert "password" not in data
+
+def test_login_user(client: TestClient) -> None:
+    client.post('/auth/register', json={
+        'name': 'Test',
+        'email': 'testuser@gmail.com',
+        'password': 'testpassword'
+    })
+    response = client.post('/auth/login', data={
+        'username': 'testuser@gmail.com',
+        'password': 'testpassword'
+    })
+    assert response.status_code == 200
+    assert 'access_token' in response.json()
+
+def test_email_already_registered(client: TestClient) -> None:
+    client.post('/auth/register', json={
+        'name': 'Test',
+        'email': 'testuser@gmail.com',
+        'password': 'testpassword'
+    })
+    response = client.post('/auth/register', json={
+        'name': 'Test',
+        'email': 'testuser@gmail.com',
+        'password': 'testpassword'
+    })
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Email already registered"}
+
+
+def test_login_invalid_password(client: TestClient) -> None:
+    client.post('/auth/register', json={
+            'name': 'Test',
+            'email': 'testuser@gmail.com',
+            'password': 'testpassword'
+        })
+    response = client.post('/auth/login', data={
+        'username': 'testuser@gmail.com',
+        'password': 'invalidpassword'
+    })
+    assert response.status_code == 401
+    assert response.json() == {"detail": "email or password is incorrect"}
+
+def test_login_nonexistent_user(client: TestClient) -> None:
+    response = client.post('/auth/login', data={
+        'username': 'nonexistentuser@gmail.com',
+        'password': 'testpassword'
+    })
+    assert response.status_code == 401
+    assert response.json() == {"detail": "email or password is incorrect"}
+
+def test_delete_user(client: TestClient) -> None:
+    client.post('/auth/register', json={
+        'name': 'Test',
+        'email': 'testuser@gmail.com',
+        'password': 'testpassword'
+    })
+    response = client.post('/auth/login', data={
+        'username': 'testuser@gmail.com',
+        'password': 'testpassword'
+    })
+    token = response.json()['access_token']
+    response = client.delete('auth/users/1', headers={'Authorization': f'Bearer {token}'})
+    assert response.status_code == 200
+
+def test_valid_token_deleted_user(client: TestClient) -> None:
+    client.post('/auth/register', json={
+        'name': 'Test',
+        'email': 'testuser@gmail.com',
+        'password': 'testpassword'
+    })
+    response = client.post('/auth/login', data={
+        'username': 'testuser@gmail.com',
+        'password': 'testpassword'
+    })
+    assert response.status_code == 200
+    token = response.json()['access_token']
+    response = client.delete('auth/users/1', headers={'Authorization': f'Bearer {token}'})
+    assert response.status_code == 200
+    response = client.post('/loans/', headers={'Authorization': f'Bearer {token}'}, json={
+        'book_id': 1,
+        'user_id': 1,
+        'return_date': '2026-08-30'
+    })
+    assert response.status_code == 404
+    assert response.json() == {"detail": "User not found"}
+
+def test_expired_token(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeDatetime(datetime.datetime):
+        @classmethod
+        def now(cls, tz: datetime.tzinfo | None = None) -> datetime.datetime:
+            return datetime.datetime.now(tz) - datetime.timedelta(minutes=31)
+        
+    monkeypatch.setattr("services.auth_service.datetime", FakeDatetime)
+    client.post('/auth/register', json={
+        'name': 'Test',
+        'email': 'testuser@gmail.com',
+        'password': 'testpassword'
+    })
+    response = client.post('/auth/login', data={
+        'username': 'testuser@gmail.com',
+        'password': 'testpassword'
+    })
+    token = response.json()['access_token']
+    response = client.post('/loans/', headers={'Authorization': f'Bearer {token}'}, json={
+        'book_id': 1,
+        'user_id': 1,
+        'return_date': '2026-08-30'
+    })
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Token has expired"}
+
+def test_invalid_token(client: TestClient) -> None:
+    response = client.post('/loans/', headers={'Authorization': 'Bearer invalidtoken'}, json={
+        'book_id': 1,
+        'user_id': 1
+    })
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Invalid token"}
+
+def test_token_signed_with_wrong_secret(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("services.auth_service.SECRET_KEY", "wrongsecret")
+    client.post('/auth/register', json={
+        'name': 'Test',
+        'email': 'testuser@gmail.com',
+        'password': 'testpassword'
+    })
+    response = client.post('/auth/login', data={
+        'username': 'testuser@gmail.com',
+        'password': 'testpassword'
+    })
+    token = response.json()['access_token']
+    response = client.post('/loans/', headers={'Authorization': f'Bearer {token}'}, json={
+        'book_id': 1,
+        'user_id': 1,
+        'return_date': '2026-08-30'
+    })
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Invalid token"}
