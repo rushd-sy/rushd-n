@@ -8,19 +8,13 @@ from sqlalchemy import func, select, func
 from schemas.loan import LoanCreate, LoanOut
 from schemas.common import Page
 from db.models.loan import Loan as DBLoan
-from db.models.book import Book as DBBook
 from dependency import CommonsDepForPagination, CurrentUserDep, CommonsDepForDB
+from services.book_service import BookService
 
 class LoanService:
     def __init__(self, db: CommonsDepForDB) -> None:
         self.db = db
-
-    async def ensure_book_exists(self, book_id: int) -> None:
-        query = select(DBBook).where(DBBook.book_id == book_id)
-        result = await self.db.execute(query)
-        db_book = result.scalar_one_or_none()
-        if not db_book:
-            raise HTTPException(status_code=400, detail="book not found")
+        self.book_service = BookService(db)
 
     async def get_loans(
         self,
@@ -42,7 +36,7 @@ class LoanService:
     async def create_loan(self, loan: LoanCreate, user_id: CurrentUserDep) -> LoanOut:
         if user_id is None:
             raise HTTPException(status_code=401, detail="unauthorized")
-        await self.ensure_book_exists(loan.book_id)
+        await self.book_service.ensure_book_exists(loan.book_id)
         new_loan = DBLoan(
             book_id=loan.book_id,
             user_id=user_id,
@@ -90,7 +84,7 @@ class LoanService:
         db_loan = result.scalar_one_or_none()
         if not db_loan:
             raise HTTPException(status_code=404, detail="Loan not found")
-        await self.ensure_book_exists(loan.book_id)
+        await self.book_service.ensure_book_exists(loan.book_id)
         db_loan.book_id = loan.book_id
         db_loan.user_id = user_id
         db_loan.return_date = loan.return_date

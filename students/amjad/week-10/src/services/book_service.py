@@ -6,22 +6,23 @@ from datetime import datetime
 from schemas.book import BookCreate, BookOut
 from schemas.common import Page
 from db.models.book import Book as DBBook
-from db.models.author import Author as DBAuthor
 from dependency import CommonsDepForPagination, CurrentUserDep, CommonsDepForDB
 from exceptions import BookNotFoundError
 from sqlalchemy import select, func
 import logging 
+from services.author_service import AuthorService
 
 class BookService:
     def __init__(self, db: CommonsDepForDB) -> None:
         self.db = db
+        self.author_service = AuthorService(db)
 
-    async def ensure_author_exists(self, author_id: int) -> None:
-        query = select(DBAuthor).where(DBAuthor.author_id == author_id)
+    async def ensure_book_exists(self, book_id: int) -> None:
+        query = select(DBBook).where(DBBook.book_id == book_id)
         result = await self.db.execute(query)
-        author = result.scalar_one_or_none()
-        if not author:
-            raise HTTPException(status_code=400, detail="author not found")
+        db_book = result.scalar_one_or_none()
+        if not db_book:
+            raise HTTPException(status_code=400, detail="book not found")    
 
     async def send_email_task(self, book: BookOut) -> None:
         await asyncio.sleep(2)
@@ -68,7 +69,7 @@ class BookService:
     ) -> BookOut:
         if user_id is None:
             raise HTTPException(status_code=401, detail="unauthorized")
-        await self.ensure_author_exists(book.author_id)
+        await self.author_service.ensure_author_exists(book.author_id)
         new_book = DBBook(
             title=book.title,
             author_id=book.author_id,
@@ -92,7 +93,7 @@ class BookService:
         db_book = result.scalar_one_or_none()
         if not db_book:
             raise BookNotFoundError(book_id=book_id)
-        await self.ensure_author_exists(book.author_id)
+        await self.author_service.ensure_author_exists(book.author_id)
         db_book.title = book.title
         db_book.author_id = book.author_id
         db_book.genre = book.genre

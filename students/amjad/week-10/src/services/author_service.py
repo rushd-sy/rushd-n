@@ -12,6 +12,13 @@ class AuthorService:
     def __init__(self, db: CommonsDepForDB) -> None:
         self.db = db
 
+    async def ensure_author_exists(self, author_id: int) -> None:
+        query = select(DBAuthor).where(DBAuthor.author_id == author_id)
+        result = await self.db.execute(query)
+        author = result.scalar_one_or_none()
+        if not author:
+            raise HTTPException(status_code=400, detail="author not found")
+
     async def create_author(
         self, author: AuthorCreate, user_id: CurrentUserDep
     ) -> AuthorOut:
