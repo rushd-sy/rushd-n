@@ -34,12 +34,12 @@ app.include_router(books_router, prefix="/books", tags=["books"])
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 
 @app.exception_handler(BookNotFoundError)
-async def Book_Not_Found(request: Request, exc: BookNotFoundError):
+async def Book_Not_Found(request: Request, exc: BookNotFoundError) -> JSONResponse:
     return JSONResponse(
         status_code=404, content={"message": f"Book {exc.book_id} not found"}
     )
 
 
 @app.get("/")
-async def root():
+async def root() -> dict[str, str]:
     return {"message": "running"}

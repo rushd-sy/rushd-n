@@ -1,5 +1,7 @@
 import asyncio
 import os
+from collections.abc import Iterator
+from typing import Any
 from dotenv import load_dotenv
 import pytest
 from fastapi.testclient import TestClient
@@ -18,13 +20,13 @@ TEST_DATABASE_URL = os.getenv(
 
 
 @pytest.fixture
-def test_db(monkeypatch):
+def test_db(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     test_engine = create_async_engine(TEST_DATABASE_URL, poolclass=NullPool)
     test_sessionmaker = async_sessionmaker(
         bind=test_engine, class_=AsyncSession, expire_on_commit=False
     )
 
-    async def init_models():
+    async def init_models() -> None:
         async with test_engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
     asyncio.run(init_models())
@@ -32,30 +34,30 @@ def test_db(monkeypatch):
     monkeypatch.setattr("db.database.sessionmaker", test_sessionmaker)
     yield
 
-    async def cleanup():
+    async def cleanup() -> None:
         async with test_engine.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
         await test_engine.dispose()
     asyncio.run(cleanup())
 
 @pytest.fixture
-def client(test_db):
+def client(test_db: None) -> TestClient:
     return TestClient(app)
 
 @pytest.fixture
-def auth_headers(client):
+def auth_headers(client: TestClient) -> dict[str, str]:
     client.post("/auth/register", json={"name": "test", "email": "test@test.com", "password": "password123"})
     res = client.post("/auth/login", data={"username": "test@test.com", "password": "password123"})
     token = res.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
 
 @pytest.fixture
-def create_author(client, auth_headers):
+def create_author(client: TestClient, auth_headers: dict[str, str]) -> dict[str, Any]:
     response = client.post("/authors", json={"name": "test_author", "birth_year": 2000}, headers=auth_headers)
     return response.json()
 
 @pytest.fixture
-def create_book(client, auth_headers, create_author):
+def create_book(client: TestClient, auth_headers: dict[str, str], create_author: dict[str, Any]) -> dict[str, Any]:
     response = client.post(
         "/books",
         json={
@@ -69,6 +71,6 @@ def create_book(client, auth_headers, create_author):
     return response.json()
 
 @pytest.fixture
-def create_user(client):
+def create_user(client: TestClient) -> dict[str, Any]:
     response = client.post("/auth/register", json={"name": "user", "email": "user@example.com", "password": "password123"})
     return response.json()

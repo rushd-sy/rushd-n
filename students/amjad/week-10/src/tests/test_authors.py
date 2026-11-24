@@ -1,7 +1,9 @@
+from typing import Any
 import pytest
+from fastapi.testclient import TestClient
 
 
-def test_create_author(client, auth_headers):
+def test_create_author(client: TestClient, auth_headers: dict[str, str]) -> None:
     response = client.post(
         "/authors",
         json={"name": "John Doe", "birth_year": 1990},
@@ -24,12 +26,14 @@ def test_create_author(client, auth_headers):
         {},
     ],
 )
-def test_create_author_invalid_input(client, invalid_input, auth_headers):
+def test_create_author_invalid_input(
+    client: TestClient, invalid_input: dict[str, Any], auth_headers: dict[str, str]
+) -> None:
     response = client.post("/authors", json=invalid_input, headers=auth_headers)
     assert response.status_code == 422
 
 
-def test_update_author_not_found(client, auth_headers):
+def test_update_author_not_found(client: TestClient, auth_headers: dict[str, str]) -> None:
     response = client.put(
         "/authors/999",
         json={"name": "Jane Doe", "birth_year": 1990},
@@ -39,11 +43,11 @@ def test_update_author_not_found(client, auth_headers):
     assert response.json() == {"detail": "Author not found"}
 
 
-def test_unauthorized_access(client):
+def test_unauthorized_access(client: TestClient) -> None:
     response = client.post("/authors", json={"name": "John Doe", "birth_year": 1990})
     assert response.status_code == 401
 
-def test_delete_author(client, auth_headers):
+def test_delete_author(client: TestClient, auth_headers: dict[str, str]) -> None:
     response = client.post(
         "/authors",
         json={"name": "John Doe", "birth_year": 1990},
@@ -59,7 +63,7 @@ def test_delete_author(client, auth_headers):
     assert data["name"] == "John Doe"
     assert data["birth_year"] == 1990
 
-def test_update_author(client, auth_headers):
+def test_update_author(client: TestClient, auth_headers: dict[str, str]) -> None:
     response = client.post(
         "/authors",
         json={"name": "John Doe", "birth_year": 1990},

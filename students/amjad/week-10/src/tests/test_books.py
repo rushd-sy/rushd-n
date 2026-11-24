@@ -1,7 +1,11 @@
+from typing import Any
 import pytest
+from fastapi.testclient import TestClient
 
 
-def test_create_book(client, auth_headers, create_author):
+def test_create_book(
+    client: TestClient, auth_headers: dict[str, str], create_author: dict[str, Any]
+) -> None:
     response = client.post(
         "/books",
         json={
@@ -46,13 +50,17 @@ def test_create_book(client, auth_headers, create_author):
         {"title": "mooo", "author_id": 1, "year": 1925},
     ],
 )
-def test_create_book_invalid_input(client, invalid_input, auth_headers):
+def test_create_book_invalid_input(
+    client: TestClient, invalid_input: dict[str, Any], auth_headers: dict[str, str]
+) -> None:
     response = client.post("/books", json=invalid_input, headers=auth_headers)
     assert response.status_code == 422
 
 
 
-def test_update_book_not_found(client, auth_headers, create_author):
+def test_update_book_not_found(
+    client: TestClient, auth_headers: dict[str, str], create_author: dict[str, Any]
+) -> None:
     response = client.put(
         "/books/999",
         json={
@@ -67,7 +75,7 @@ def test_update_book_not_found(client, auth_headers, create_author):
     assert response.json() == {"message": "Book 999 not found"}
 
 
-def test_unauthorized_access(client, create_author):
+def test_unauthorized_access(client: TestClient, create_author: dict[str, Any]) -> None:
     response = client.post(
         "/books",
         json={
@@ -79,7 +87,9 @@ def test_unauthorized_access(client, create_author):
     )
     assert response.status_code == 401
 
-def test_delete_book(client, auth_headers, create_author):
+def test_delete_book(
+    client: TestClient, auth_headers: dict[str, str], create_author: dict[str, Any]
+) -> None:
     response = client.post(
         "/books",
         json={
@@ -102,7 +112,9 @@ def test_delete_book(client, auth_headers, create_author):
     assert data["genre"] == "yooo"
     assert data["year"] == 1925
 
-def test_update_book(client, auth_headers, create_author):
+def test_update_book(
+    client: TestClient, auth_headers: dict[str, str], create_author: dict[str, Any]
+) -> None:
     response = client.post(
         "/books",
         json={
@@ -134,7 +146,9 @@ def test_update_book(client, auth_headers, create_author):
     assert data["genre"] == "yooo"
     assert data["year"] == 1925
 
-def test_create_book_with_nonexistent_author(client, auth_headers):
+def test_create_book_with_nonexistent_author(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
     response = client.post(
         "/books",
         json={
@@ -148,7 +162,9 @@ def test_create_book_with_nonexistent_author(client, auth_headers):
     assert response.status_code == 400
     assert response.json() == {"detail": "author not found"}
 
-def test_update_book_with_nonexistent_author(client, auth_headers, create_author):
+def test_update_book_with_nonexistent_author(
+    client: TestClient, auth_headers: dict[str, str], create_author: dict[str, Any]
+) -> None:
     response = client.post(
         "/books",
         json={

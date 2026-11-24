@@ -1,11 +1,10 @@
 
 import datetime
+import pytest
+from fastapi.testclient import TestClient
 
 
-import datetime
-
-
-def test_register_user(client):
+def test_register_user(client: TestClient) -> None:
     response = client.post(
         "/auth/register",
         json={
@@ -21,7 +20,7 @@ def test_register_user(client):
     assert "user_id" in data
     assert "password" not in data
 
-def test_login_user(client):
+def test_login_user(client: TestClient) -> None:
     client.post('/auth/register', json={
         'name': 'Test',
         'email': 'testuser@gmail.com',
@@ -34,7 +33,7 @@ def test_login_user(client):
     assert response.status_code == 200
     assert 'access_token' in response.json()
 
-def test_email_already_registered(client):
+def test_email_already_registered(client: TestClient) -> None:
     client.post('/auth/register', json={
         'name': 'Test',
         'email': 'testuser@gmail.com',
@@ -49,7 +48,7 @@ def test_email_already_registered(client):
     assert response.json() == {"detail": "Email already registered"}
 
 
-def test_login_invalid_password(client):
+def test_login_invalid_password(client: TestClient) -> None:
     client.post('/auth/register', json={
             'name': 'Test',
             'email': 'testuser@gmail.com',
@@ -62,7 +61,7 @@ def test_login_invalid_password(client):
     assert response.status_code == 401
     assert response.json() == {"detail": "email or password is incorrect"}
 
-def test_login_nonexistent_user(client):
+def test_login_nonexistent_user(client: TestClient) -> None:
     response = client.post('/auth/login', data={
         'username': 'nonexistentuser@gmail.com',
         'password': 'testpassword'
@@ -70,7 +69,7 @@ def test_login_nonexistent_user(client):
     assert response.status_code == 401
     assert response.json() == {"detail": "email or password is incorrect"}
 
-def test_delete_user(client):
+def test_delete_user(client: TestClient) -> None:
     client.post('/auth/register', json={
         'name': 'Test',
         'email': 'testuser@gmail.com',
@@ -84,7 +83,7 @@ def test_delete_user(client):
     response = client.delete('auth/users/1', headers={'Authorization': f'Bearer {token}'})
     assert response.status_code == 200
 
-def test_valid_token_deleted_user(client):
+def test_valid_token_deleted_user(client: TestClient) -> None:
     client.post('/auth/register', json={
         'name': 'Test',
         'email': 'testuser@gmail.com',
@@ -106,10 +105,10 @@ def test_valid_token_deleted_user(client):
     assert response.status_code == 404
     assert response.json() == {"detail": "User not found"}
 
-def test_expired_token(client, monkeypatch):
+def test_expired_token(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
     class FakeDatetime(datetime.datetime):
         @classmethod
-        def now(cls, tz=None):
+        def now(cls, tz: datetime.tzinfo | None = None) -> datetime.datetime:
             return datetime.datetime.now(tz) - datetime.timedelta(minutes=31)
         
     monkeypatch.setattr("services.auth_service.datetime", FakeDatetime)
@@ -131,7 +130,7 @@ def test_expired_token(client, monkeypatch):
     assert response.status_code == 401
     assert response.json() == {"detail": "Token has expired"}
 
-def test_invalid_token(client):
+def test_invalid_token(client: TestClient) -> None:
     response = client.post('/loans/', headers={'Authorization': 'Bearer invalidtoken'}, json={
         'book_id': 1,
         'user_id': 1
@@ -139,7 +138,7 @@ def test_invalid_token(client):
     assert response.status_code == 401
     assert response.json() == {"detail": "Invalid token"}
 
-def test_token_signed_with_wrong_secret(client, monkeypatch):
+def test_token_signed_with_wrong_secret(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("services.auth_service.SECRET_KEY", "wrongsecret")
     client.post('/auth/register', json={
         'name': 'Test',

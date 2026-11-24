@@ -1,11 +1,14 @@
-from fastapi import Request
+from fastapi import Request, Response
+from typing import Callable, Awaitable
 import logging
 import uuid
 
 logging.basicConfig(level=logging.INFO)
 
 
-async def log_requests(request: Request, call_next):
+async def log_requests(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
     import time
 
     start_time = time.perf_counter()
@@ -17,7 +20,9 @@ async def log_requests(request: Request, call_next):
     return response
 
 
-async def add_request_id(request: Request, call_next):
+async def add_request_id(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
     request_id = str(uuid.uuid4())
     response = await call_next(request)
     response.headers["X-Request-ID"] = request_id

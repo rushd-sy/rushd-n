@@ -25,7 +25,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 async def get_pagination_params(
     offset: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=20)] = 10,
-):
+) -> PageParams:
     return PageParams(offset=offset, limit=limit)
 
 
