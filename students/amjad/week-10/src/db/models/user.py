@@ -2,10 +2,10 @@ from typing import TYPE_CHECKING
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, func
 from datetime import datetime
-from .Base import Base
+from .base import Base
 
 if TYPE_CHECKING:
-    from .Loan import Loan
+    from .loan import Loan
 
 class User(Base):
     __tablename__ = "users"

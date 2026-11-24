@@ -1,7 +1,7 @@
-from .Base import Base
-from .Author import Author
-from .Book import Book
-from .Loan import Loan
-from .User import User
+from .base import Base
+from .author import Author
+from .book import Book
+from .loan import Loan
+from .user import User
 
 __all__ = ["Base", "Author", "Book", "Loan", "User"]

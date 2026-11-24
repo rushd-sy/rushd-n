@@ -2,11 +2,11 @@ from typing import TYPE_CHECKING
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, func
 from datetime import datetime
-from .Base import Base
+from .base import Base
 
 if TYPE_CHECKING:
-    from .Book import Book
-    from .User import User
+    from .book import Book
+    from .user import User
 
 
 class Loan(Base):

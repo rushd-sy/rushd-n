@@ -2,11 +2,11 @@ from typing import TYPE_CHECKING
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, ForeignKey, func
 from datetime import datetime
-from .Base import Base
+from .base import Base
 
 if TYPE_CHECKING:
-    from .Loan import Loan
-    from .Author import Author
+    from .loan import Loan
+    from .author import Author
 
 class Book(Base):
     __tablename__ = "books"

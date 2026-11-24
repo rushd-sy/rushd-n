@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.pool import NullPool
 from main import app
-from db.models.Base import Base
+from db.models.base import Base
 
 load_dotenv()
     

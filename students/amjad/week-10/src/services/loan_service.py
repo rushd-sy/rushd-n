@@ -7,8 +7,8 @@ from datetime import datetime
 from sqlalchemy import func, select, func
 from schemas.loan import LoanCreate, LoanOut
 from schemas.common import Page
-from db.models.Loan import Loan as DBLoan
-from db.models.Book import Book as DBBook
+from db.models.loan import Loan as DBLoan
+from db.models.book import Book as DBBook
 from dependency import CommonsDepForPagination, CurrentUserDep, CommonsDepForDB
 
 class LoanService:

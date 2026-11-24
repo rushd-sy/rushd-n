@@ -11,7 +11,7 @@ from fastapi import HTTPException
 from dotenv import load_dotenv
 from db.database import get_db, AsyncSession
 from sqlalchemy import select
-from db.models.User import User
+from db.models.user import User
 
 CommonsDepForDB = Annotated[AsyncSession, Depends(get_db)]
 
